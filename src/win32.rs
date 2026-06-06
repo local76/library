@@ -793,7 +793,7 @@ pub fn show_toast_notification(title: &str, message: &str) {
         doc.LoadXml(&windows::core::HSTRING::from(toast_xml))?;
         
         let toast = ToastNotification::CreateToastNotification(&doc)?;
-        let notifier = ToastNotificationManager::CreateToastNotifierWithId(&windows::core::HSTRING::from("tourian.dynamics.rtem"))?;
+        let notifier = ToastNotificationManager::CreateToastNotifierWithId(&windows::core::HSTRING::from("tourian.dynamics.rtemplate"))?;
         notifier.Show(&toast)?;
         Ok(())
     })();

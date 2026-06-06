@@ -51,12 +51,15 @@ fn main() {
 
     println!("Packaging application: {} (version: {})", app_name, app_version);
 
-    // 3. Create dist directory
+    // 3. Create dist directory structure
     let dist_dir = Path::new("dist");
     if dist_dir.exists() {
         fs::remove_dir_all(dist_dir).ok();
     }
-    fs::create_dir_all(dist_dir).expect("failed to create dist directory");
+    let binaries_dir = dist_dir.join("binaries");
+    let packages_dir = dist_dir.join("packages");
+    fs::create_dir_all(&binaries_dir).expect("failed to create dist/binaries directory");
+    fs::create_dir_all(&packages_dir).expect("failed to create dist/packages directory");
 
     // 4. Build Windows native binary
     println!("\n[1/4] Building Windows native release binary...");
@@ -118,6 +121,17 @@ fn main() {
         std::process::exit(1);
     }
 
+    // 7.5 Generate MSI package (.msi) using cargo wix
+    if Path::new("wix").exists() {
+        println!("\n[4.5/4.5] Generating MSI package (.msi)...");
+        let mut cmd = Command::new("cargo");
+        cmd.arg("wix").arg("--no-build");
+        let status = cmd.status().expect("failed to execute cargo wix");
+        if !status.success() {
+            println!("Warning: cargo wix failed. Make sure WiX Toolset is installed.");
+        }
+    }
+
     // 8. Copy outputs to dist/
     println!("\n[5/5] Copying packaging results to dist/...");
 
@@ -126,8 +140,8 @@ fn main() {
         .join("release")
         .join(format!("{}.exe", app_name));
     if exe_src.exists() {
-        let exe_dest = dist_dir.join(format!("{}.exe", app_name));
-        fs::copy(&exe_src, &exe_dest).expect("failed to copy .exe to dist/");
+        let exe_dest = binaries_dir.join(format!("{}.exe", app_name));
+        fs::copy(&exe_src, &exe_dest).expect("failed to copy .exe to dist/binaries/");
         println!("  - Created: {}", exe_dest.display());
     }
 
@@ -145,12 +159,12 @@ fn main() {
         .join(&deb_filename_alt);
 
     if deb_src.exists() {
-        let deb_dest = dist_dir.join(&deb_filename);
-        fs::copy(&deb_src, &deb_dest).expect("failed to copy .deb to dist/");
+        let deb_dest = packages_dir.join(&deb_filename);
+        fs::copy(&deb_src, &deb_dest).expect("failed to copy .deb to dist/packages/");
         println!("  - Created: {}", deb_dest.display());
     } else if deb_src_alt.exists() {
-        let deb_dest = dist_dir.join(&deb_filename_alt);
-        fs::copy(&deb_src_alt, &deb_dest).expect("failed to copy .deb to dist/");
+        let deb_dest = packages_dir.join(&deb_filename_alt);
+        fs::copy(&deb_src_alt, &deb_dest).expect("failed to copy .deb to dist/packages/");
         println!("  - Created: {}", deb_dest.display());
     } else {
         // Try searching for any .deb in the debian directory
@@ -162,8 +176,8 @@ fn main() {
                 let path = entry.path();
                 if path.extension().map_or(false, |ext| ext == "deb") {
                     let filename = path.file_name().unwrap().to_str().unwrap();
-                    let deb_dest = dist_dir.join(filename);
-                    fs::copy(&path, &deb_dest).expect("failed to copy .deb to dist/");
+                    let deb_dest = packages_dir.join(filename);
+                    fs::copy(&path, &deb_dest).expect("failed to copy .deb to dist/packages/");
                     println!("  - Created: {}", deb_dest.display());
                     break;
                 }
@@ -179,8 +193,8 @@ fn main() {
         .join(&rpm_filename);
 
     if rpm_src.exists() {
-        let rpm_dest = dist_dir.join(&rpm_filename);
-        fs::copy(&rpm_src, &rpm_dest).expect("failed to copy .rpm to dist/");
+        let rpm_dest = packages_dir.join(&rpm_filename);
+        fs::copy(&rpm_src, &rpm_dest).expect("failed to copy .rpm to dist/packages/");
         println!("  - Created: {}", rpm_dest.display());
     } else {
         // Try searching for any .rpm in the generate-rpm directory
@@ -192,12 +206,55 @@ fn main() {
                 let path = entry.path();
                 if path.extension().map_or(false, |ext| ext == "rpm") {
                     let filename = path.file_name().unwrap().to_str().unwrap();
-                    let rpm_dest = dist_dir.join(filename);
-                    fs::copy(&path, &rpm_dest).expect("failed to copy .rpm to dist/");
+                    let rpm_dest = packages_dir.join(filename);
+                    fs::copy(&path, &rpm_dest).expect("failed to copy .rpm to dist/packages/");
                     println!("  - Created: {}", rpm_dest.display());
                     break;
                 }
             }
+        }
+    }
+
+    // Copy .msi if created
+    let wix_dir = Path::new("target").join("wix");
+    if wix_dir.exists() {
+        if let Ok(entries) = fs::read_dir(wix_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().map_or(false, |ext| ext == "msi") {
+                    let filename = path.file_name().unwrap().to_str().unwrap();
+                    let msi_dest = packages_dir.join(filename);
+                    fs::copy(&path, &msi_dest).expect("failed to copy .msi to dist/packages/");
+                    println!("  - Created: {}", msi_dest.display());
+                    break;
+                }
+            }
+        }
+    }
+
+    // Process packaging templates from packaging/ to dist/packages/
+    let packaging_dir = Path::new("packaging");
+    if packaging_dir.exists() {
+        println!("\n[5/5] Processing packaging templates from packaging/...");
+        
+        // Process PKGBUILD
+        let pkgbuild_src = packaging_dir.join("PKGBUILD");
+        if pkgbuild_src.exists() {
+            let content = fs::read_to_string(&pkgbuild_src).expect("failed to read PKGBUILD template");
+            let new_content = content.replace("TEMPLATE_VERSION", &app_version);
+            let pkgbuild_dest = packages_dir.join("PKGBUILD");
+            fs::write(&pkgbuild_dest, new_content).expect("failed to write PKGBUILD to dist/packages/");
+            println!("  - Created: {}", pkgbuild_dest.display());
+        }
+
+        // Process winget.yaml
+        let winget_src = packaging_dir.join("winget.yaml");
+        if winget_src.exists() {
+            let content = fs::read_to_string(&winget_src).expect("failed to read winget.yaml template");
+            let new_content = content.replace("TEMPLATE_VERSION", &app_version);
+            let winget_dest = packages_dir.join("winget.yaml");
+            fs::write(&winget_dest, new_content).expect("failed to write winget.yaml to dist/packages/");
+            println!("  - Created: {}", winget_dest.display());
         }
     }
 

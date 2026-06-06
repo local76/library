@@ -42,7 +42,7 @@ To consume `rCommon` in any `rApp` or when starting from `rTemplate`, add it as 
 
 ```toml
 [dependencies]
-rcommon = { git = "https://github.com/tourian-dynamics/rCommon.git", branch = "main" }
+rcommon = { git = "https://github.com/local76/rCommon.git", branch = "main" }
 ```
 
 In your application code, replace local module declarations (`mod win32;`, `mod reg;`, `mod widgets;`) with imports from `rcommon`:
