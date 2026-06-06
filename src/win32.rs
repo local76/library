@@ -729,6 +729,9 @@ pub struct GlyphMap {
     pub shell: &'static str,
     pub terminal: &'static str,
     pub network: &'static str,
+    pub clipboard: &'static str,
+    pub play: &'static str,
+    pub play_empty: &'static str,
 }
 
 impl GlyphMap {
@@ -749,6 +752,9 @@ impl GlyphMap {
                 shell: "[SH]",
                 terminal: "[TERM]",
                 network: "[NET]",
+                clipboard: "[CLIP]",
+                play: "> ",
+                play_empty: "  ",
             }
         } else {
             Self {
@@ -765,6 +771,9 @@ impl GlyphMap {
                 shell: "🐚",
                 terminal: "📟",
                 network: "🌐",
+                clipboard: "📋",
+                play: "▶ ",
+                play_empty: "  ",
             }
         }
     }
