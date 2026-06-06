@@ -1,10 +1,10 @@
 # rCommon
 
-`rcommon` is the unified utility, integration, and widget library shared across the `rApps` ecosystem, supporting both Windows and Linux environments. By consolidating platform-specific APIs, terminal handling, custom widgets, and utility routines into a single reusable library, it ensures visual and functional consistency across all terminal applications while enabling seamless cross-platform compilation.
+`rcommon` is the unified utility, integration, and widget library shared across the repositories, supporting both Windows and Linux environments. By consolidating platform-specific APIs, terminal handling, custom widgets, and utility routines into a single reusable library, it ensures visual and functional consistency across all terminal applications while enabling seamless cross-platform compilation.
 
 ## Purpose
 
-Each application in the `rApps` suite (such as `rFetch`, `rMonitor`, `rSaver`, `rStartup`, and `rWifi`) is designed to run as a standalone TUI tool on both Windows and Linux. 
+Each application in the suite (such as `rFetch`, `rMonitor`, `rIdle`, `rStartup`, and `rWifi`) is designed to run as a standalone TUI tool on both Windows and Linux. 
 
 Instead of copying and pasting code across repositories, `rCommon` is imported directly via Git in each application's `Cargo.toml`. This allows:
 1. **Unified Design System**: A single source of truth for accent-color calculations and custom widgets.
@@ -36,9 +36,9 @@ Custom widgets designed specifically for the `ratatui` ecosystem that adapt to t
 
 ---
 
-## Integration in rApps
+## Integration
 
-To consume `rCommon` in any `rApp` or when starting from `rTemplate`, add it as a Git dependency in your project's `Cargo.toml`:
+To consume `rCommon` in any repository or when starting from `rTemplate`, add it as a Git dependency in your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
