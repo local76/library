@@ -212,9 +212,12 @@ impl SingleInstanceGuard {
     pub fn try_new() -> Result<Self, String> {
         #[cfg(windows)]
         {
-            let name: Vec<u16> = "Local\\rtem_SingleInstanceMutex_2026\0"
-                .encode_utf16()
-                .collect();
+            let exe_name = std::env::current_exe()
+                .ok()
+                .and_then(|p| p.file_name().map(|f| f.to_string_lossy().to_string()))
+                .unwrap_or_else(|| "rtem".to_string());
+            let mutex_name = format!("Local\\{}_SingleInstanceMutex_2026\0", exe_name);
+            let name: Vec<u16> = mutex_name.encode_utf16().collect();
             let handle = unsafe { CreateMutexW(std::ptr::null(), 1, name.as_ptr()) };
             if handle.is_null() {
                 return Err("Failed to create single-instance mutex.".to_string());

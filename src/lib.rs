@@ -13,3 +13,6 @@ pub mod reg;
 pub mod reg;
 
 pub mod widgets;
+
+pub mod rgb;
+
