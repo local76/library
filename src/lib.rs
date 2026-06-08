@@ -126,7 +126,7 @@ pub use lifecycle::foreground::console::{
 };
 
 // Core enhancements
-pub use core::SystemInfo;
+pub use core::{SystemInfo, hsl_to_rgb, rgb_to_hsl};
 pub use platform::native::sys_info::get_system_info;
 
 // GPU compute enhancements
