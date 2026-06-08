@@ -11,7 +11,8 @@ pub mod doctor;
 
 pub use scaffold::{
     CliCommand, CliCommandDef, CliOptionDef, CliParser, ParsedArgs, ScaffoldAction,
-    parse_cli_args, is_help_arg, is_version_arg, is_doctor_arg, is_install_arg,
+    parse_cli_args, is_help_arg, is_version_arg, is_doctor_arg, is_install_arg, is_debug_arg,
+    is_no_color_arg, is_json_arg, is_high_contrast_arg, is_accessible_arg, is_tui_arg, is_cli_arg,
 };
 pub use doctor::{run_doctor, run_doctor_with_custom};
 

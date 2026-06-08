@@ -165,3 +165,31 @@ pub fn is_doctor_arg(arg: &str) -> bool {
 pub fn is_install_arg(arg: &str) -> bool {
     arg.eq_ignore_ascii_case("install") || arg.eq_ignore_ascii_case("--install")
 }
+
+pub fn is_debug_arg(arg: &str) -> bool {
+    arg.eq_ignore_ascii_case("--debug") || arg.eq_ignore_ascii_case("-d") || arg.eq_ignore_ascii_case("--verbose")
+}
+
+pub fn is_no_color_arg(arg: &str) -> bool {
+    arg.eq_ignore_ascii_case("--no-color") || arg.eq_ignore_ascii_case("-n")
+}
+
+pub fn is_json_arg(arg: &str) -> bool {
+    arg.eq_ignore_ascii_case("--json") || arg.eq_ignore_ascii_case("-j")
+}
+
+pub fn is_high_contrast_arg(arg: &str) -> bool {
+    arg.eq_ignore_ascii_case("--high-contrast") || arg.eq_ignore_ascii_case("-c")
+}
+
+pub fn is_accessible_arg(arg: &str) -> bool {
+    arg.eq_ignore_ascii_case("--accessible") || arg.eq_ignore_ascii_case("--screen-reader")
+}
+
+pub fn is_tui_arg(arg: &str) -> bool {
+    arg.eq_ignore_ascii_case("--tui") || arg.eq_ignore_ascii_case("--interactive")
+}
+
+pub fn is_cli_arg(arg: &str) -> bool {
+    arg.eq_ignore_ascii_case("--cli") || arg.eq_ignore_ascii_case("--non-interactive")
+}
