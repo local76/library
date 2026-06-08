@@ -17,12 +17,14 @@ const OPEN_EXISTING: u32 = 3;
 const GENERIC_READ: u32 = 0x80000000;
 const GENERIC_WRITE: u32 = 0x40000000;
 
-pub struct Win32IpcServer {
-    handle: HANDLE,
-}
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct SendHandle(HANDLE);
+unsafe impl Send for SendHandle {}
+unsafe impl Sync for SendHandle {}
 
-unsafe impl Send for Win32IpcServer {}
-unsafe impl Sync for Win32IpcServer {}
+pub struct Win32IpcServer {
+    handle: SendHandle,
+}
 
 impl Win32IpcServer {
     pub fn bind(name: &str) -> Result<Self, Error> {
@@ -47,14 +49,14 @@ impl Win32IpcServer {
             return Err(Error::last_os_error());
         }
 
-        Ok(Self { handle })
+        Ok(Self { handle: SendHandle(handle) })
     }
 
     pub fn accept_and_respond<F>(&self, handler: F) -> Result<(), Error>
     where
         F: Fn(&str) -> String,
     {
-        let connected = unsafe { ConnectNamedPipe(self.handle, ptr::null_mut()) };
+        let connected = unsafe { ConnectNamedPipe(self.handle.0, ptr::null_mut()) };
         if connected == 0 {
             let err = Error::last_os_error();
             if err.raw_os_error() != Some(535) {
@@ -63,7 +65,7 @@ impl Win32IpcServer {
             }
         }
 
-        let mut file = unsafe { std::fs::File::from_raw_handle(self.handle as _) };
+        let mut file = unsafe { std::fs::File::from_raw_handle(self.handle.0 as _) };
         let mut buffer = [0u8; 1024];
         let read_res = file.read(&mut buffer);
 
@@ -79,8 +81,8 @@ impl Win32IpcServer {
         let _ = file.into_raw_handle(); // Disowns the handle to avoid closing it on drop
 
         unsafe {
-            windows_sys::Win32::Storage::FileSystem::FlushFileBuffers(self.handle);
-            DisconnectNamedPipe(self.handle);
+            windows_sys::Win32::Storage::FileSystem::FlushFileBuffers(self.handle.0);
+            DisconnectNamedPipe(self.handle.0);
         }
 
         Ok(())
@@ -90,17 +92,14 @@ impl Win32IpcServer {
 impl Drop for Win32IpcServer {
     fn drop(&mut self) {
         unsafe {
-            CloseHandle(self.handle);
+            CloseHandle(self.handle.0);
         }
     }
 }
 
 pub struct Win32IpcClient {
-    handle: HANDLE,
+    handle: SendHandle,
 }
-
-unsafe impl Send for Win32IpcClient {}
-unsafe impl Sync for Win32IpcClient {}
 
 impl Win32IpcClient {
     pub fn connect(name: &str) -> Result<Self, Error> {
@@ -124,11 +123,11 @@ impl Win32IpcClient {
             return Err(Error::last_os_error());
         }
 
-        Ok(Self { handle })
+        Ok(Self { handle: SendHandle(handle) })
     }
 
     pub fn send_request(&mut self, msg: &str) -> Result<String, Error> {
-        let mut file = unsafe { std::fs::File::from_raw_handle(self.handle as _) };
+        let mut file = unsafe { std::fs::File::from_raw_handle(self.handle.0 as _) };
         let write_res = file.write_all(msg.as_bytes()).and_then(|_| file.flush());
 
         if let Err(e) = write_res {
@@ -153,7 +152,7 @@ impl Win32IpcClient {
 impl Drop for Win32IpcClient {
     fn drop(&mut self) {
         unsafe {
-            CloseHandle(self.handle);
+            CloseHandle(self.handle.0);
         }
     }
 }

@@ -5,6 +5,14 @@ All notable changes to rCommon will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.26] - 2026-06-08
+
+### Fixed
+- **Win32 IPC Auto-Trait Derivations**: Introduced a `SendHandle` newtype wrapper in `src/interface/api/platform/win32_ipc.rs` to wrap Win32 `HANDLE` pointers, allowing the compiler to automatically derive `Send` and `Sync` for `Win32IpcServer` and `Win32IpcClient` and preserve auto-trait inferring.
+- **Taxonomy Feature Refinements**: Refined the default features list to use taxonomy-aligned flags, split TUI effects out from `role-application`, and conditionally gated `interface::api` behind `interface-api`.
+- **Performance Optimizations**: Cached expensive OS sys-info queries, GPU names, disk sizes, network status, and display counts with configurable TTLs, optimized `LcgRng::next_f32` float logic to bypass double-precision round-trips, and removed the redundant thread sleep on RGB controller drop.
+- **Explicit Re-exports**: Replaced all wildcard glob re-exports within library modules and compatibility shims with explicit lists to improve compile speeds and diagnostics.
+
 ## [1.9.24] - 2026-06-08
 
 ### Added

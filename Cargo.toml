@@ -1,6 +1,6 @@
 [package]
 name = "rcommon"
-version = "1.9.25"
+version = "1.9.26"
 authors = ["Jeryd <jerydleuck@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
