@@ -12,6 +12,9 @@ pub struct MatrixRain {
     active: bool,
     focused: bool,
     rng: LcgRng,
+    last_drawn: Vec<usize>,
+    last_cols: usize,
+    last_rows: usize,
 }
 
 impl MatrixRain {
@@ -39,6 +42,9 @@ impl MatrixRain {
             active: true,
             focused: true,
             rng,
+            last_drawn: Vec::new(),
+            last_cols: cols,
+            last_rows: rows,
         }
     }
 
@@ -63,6 +69,20 @@ impl MatrixRain {
             return;
         }
 
+        if cols != self.last_cols || rows != self.last_rows {
+            self.last_drawn.clear();
+            self.last_cols = cols;
+            self.last_rows = rows;
+        }
+
+        // Clear only the cells we previously wrote to
+        for &idx in &self.last_drawn {
+            if idx < grid.len() {
+                grid[idx] = TerminalCell::default();
+            }
+        }
+        self.last_drawn.clear();
+
         for drop in &self.drops {
             for i in 0..drop.length {
                 let y = (drop.y - i as f32) as isize;
@@ -84,6 +104,7 @@ impl MatrixRain {
                                 bg: (0, 0, 0),
                                 bold: i < 3,
                             };
+                            self.last_drawn.push(idx);
                         }
                     }
                 }

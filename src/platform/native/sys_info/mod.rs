@@ -116,11 +116,29 @@ pub fn get_console_window_dpi() -> u32 {
 }
 
 pub fn query_accent_color() -> (u8, u8, u8) {
-    crate::platform::CurrentPlatform::query_accent_color()
+    static CACHE: std::sync::Mutex<Option<(std::time::Instant, (u8, u8, u8))>> = std::sync::Mutex::new(None);
+    let mut lock = CACHE.lock().unwrap();
+    if let Some((last_updated, val)) = &*lock {
+        if last_updated.elapsed() < std::time::Duration::from_millis(1000) {
+            return *val;
+        }
+    }
+    let val = crate::platform::CurrentPlatform::query_accent_color();
+    *lock = Some((std::time::Instant::now(), val));
+    val
 }
 
 pub fn query_high_contrast() -> bool {
-    crate::platform::CurrentPlatform::query_high_contrast()
+    static CACHE: std::sync::Mutex<Option<(std::time::Instant, bool)>> = std::sync::Mutex::new(None);
+    let mut lock = CACHE.lock().unwrap();
+    if let Some((last_updated, val)) = &*lock {
+        if last_updated.elapsed() < std::time::Duration::from_millis(1000) {
+            return *val;
+        }
+    }
+    let val = crate::platform::CurrentPlatform::query_high_contrast();
+    *lock = Some((std::time::Instant::now(), val));
+    val
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -132,30 +150,75 @@ pub struct SystemTheme {
 
 /// Query the combined system theme settings (dark mode, high contrast, accent color).
 pub fn query_system_theme() -> SystemTheme {
+    static CACHE: std::sync::Mutex<Option<(std::time::Instant, SystemTheme)>> = std::sync::Mutex::new(None);
+    let mut lock = CACHE.lock().unwrap();
+    if let Some((last_updated, val)) = &*lock {
+        if last_updated.elapsed() < std::time::Duration::from_millis(500) {
+            return *val;
+        }
+    }
     let is_dark_mode = query_dark_mode();
     let is_high_contrast = query_high_contrast();
     let accent_color = query_accent_color();
-    SystemTheme {
+    let val = SystemTheme {
         is_dark_mode,
         is_high_contrast,
         accent_color,
-    }
+    };
+    *lock = Some((std::time::Instant::now(), val));
+    val
 }
 
 pub fn query_os_version() -> String {
-    crate::platform::CurrentPlatform::query_os_version()
+    static CACHE: std::sync::Mutex<Option<(std::time::Instant, String)>> = std::sync::Mutex::new(None);
+    let mut lock = CACHE.lock().unwrap();
+    if let Some((last_updated, val)) = &*lock {
+        if last_updated.elapsed() < std::time::Duration::from_millis(10000) {
+            return val.clone();
+        }
+    }
+    let val = crate::platform::CurrentPlatform::query_os_version();
+    *lock = Some((std::time::Instant::now(), val.clone()));
+    val
 }
 
 pub fn query_dark_mode() -> bool {
-    crate::platform::CurrentPlatform::query_dark_mode()
+    static CACHE: std::sync::Mutex<Option<(std::time::Instant, bool)>> = std::sync::Mutex::new(None);
+    let mut lock = CACHE.lock().unwrap();
+    if let Some((last_updated, val)) = &*lock {
+        if last_updated.elapsed() < std::time::Duration::from_millis(500) {
+            return *val;
+        }
+    }
+    let val = crate::platform::CurrentPlatform::query_dark_mode();
+    *lock = Some((std::time::Instant::now(), val));
+    val
 }
 
 pub fn query_power_status() -> Option<PowerStatus> {
-    crate::platform::CurrentPlatform::query_power_status()
+    static CACHE: std::sync::Mutex<Option<(std::time::Instant, Option<PowerStatus>)>> = std::sync::Mutex::new(None);
+    let mut lock = CACHE.lock().unwrap();
+    if let Some((last_updated, val)) = &*lock {
+        if last_updated.elapsed() < std::time::Duration::from_millis(1000) {
+            return val.clone();
+        }
+    }
+    let val = crate::platform::CurrentPlatform::query_power_status();
+    *lock = Some((std::time::Instant::now(), val.clone()));
+    val
 }
 
 pub fn query_bios_info() -> Option<SystemBiosInfo> {
-    crate::platform::CurrentPlatform::query_bios_info()
+    static CACHE: std::sync::Mutex<Option<(std::time::Instant, Option<SystemBiosInfo>)>> = std::sync::Mutex::new(None);
+    let mut lock = CACHE.lock().unwrap();
+    if let Some((last_updated, val)) = &*lock {
+        if last_updated.elapsed() < std::time::Duration::from_millis(10000) {
+            return val.clone();
+        }
+    }
+    let val = crate::platform::CurrentPlatform::query_bios_info();
+    *lock = Some((std::time::Instant::now(), val.clone()));
+    val
 }
 
 pub fn query_shell_and_terminal() -> (String, String) {

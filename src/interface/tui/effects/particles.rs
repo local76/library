@@ -98,6 +98,15 @@ impl crate::interface::tui::screensaver::ScreensaverEffect for SimpleParticles {
     }
 }
 
+#[inline]
+fn inv_sqrt(x: f32) -> f32 {
+    let x2 = x * 0.5;
+    let mut i = x.to_bits();
+    i = 0x5f3759df - (i >> 1);
+    let y = f32::from_bits(i);
+    y * (1.5 - (x2 * y * y))
+}
+
 /// Gravity/particle system from rLife (rIdle-scenes).
 /// Classification: Interface (TUI).
 pub struct GravityParticles {
@@ -144,9 +153,14 @@ impl GravityParticles {
             for gc in &self.gravity_centers {
                 let dx = gc.x - p.x;
                 let dy = gc.y - p.y;
-                let dist = (dx*dx + dy*dy).sqrt().max(1.0);
-                p.vx += (dx / dist) * gc.mass * dt * 0.1;
-                p.vy += (dy / dist) * gc.mass * dt * 0.1;
+                let sq_dist = dx*dx + dy*dy;
+                let inv_dist = if sq_dist <= 1.0 {
+                    1.0
+                } else {
+                    inv_sqrt(sq_dist)
+                };
+                p.vx += dx * inv_dist * gc.mass * dt * 0.1;
+                p.vy += dy * inv_dist * gc.mass * dt * 0.1;
             }
             p.x += p.vx * dt * 20.0;
             p.y += p.vy * dt * 20.0;
