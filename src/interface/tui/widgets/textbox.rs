@@ -101,13 +101,13 @@ impl<'a> Widget for AccentTextBox<'a> {
         }
 
         let slice_len = std::cmp::min(char_vec.len(), max_width);
-        for i in 0..slice_len {
+        for (i, &ch) in char_vec.iter().enumerate().take(slice_len) {
             let cx = inner_area.x + i as u16;
             let cell = &mut buf[(cx, inner_area.y)];
-            cell.set_char(char_vec[i]);
+            cell.set_char(ch);
             
             // Highlight cursor character
-            if char_vec[i] == '▕' {
+            if ch == '▕' {
                 cell.set_style(Style::default().fg(self.accent_color).add_modifier(Modifier::BOLD));
             } else {
                 cell.set_style(text_style);
