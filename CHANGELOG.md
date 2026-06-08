@@ -5,6 +5,11 @@ All notable changes to rCommon will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.22] - 2026-06-08
+
+### Changed
+- **Binary Footprint Optimization**: Disabled default-features for the `winreg` dependency, removing its transitive serialization feature (`serde`) from the library build graph. This decreases compilation times and reduces target binary size for Windows builds.
+
 ## [3.0.21] - 2026-06-08
 
 ### Changed
