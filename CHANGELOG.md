@@ -5,6 +5,11 @@ All notable changes to rCommon will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.28] - 2026-06-08
+
+### Fixed
+- **Glob Re-export Refactoring**: Replaced all four remaining wildcard glob re-exports (`pub use ...::*`) in `src/lib.rs` (for packages, monitors, window, and console modules) with explicit list re-exports to optimize cargo build and type-checking performance.
+
 ## [1.9.27] - 2026-06-08
 
 ### Fixed

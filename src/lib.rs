@@ -93,18 +93,32 @@ pub mod role;
 // Backward compat for application role
 pub use role::application::rgb;
 pub use role::application::game;
-pub use role::application::packages::*;
+pub use role::application::packages::{
+    count_scoop, count_choco, count_npm, count_steam, count_ms_store, count_native, count_winget, count_dpkg, count_pacman,
+    count_flatpak, count_snap, PackageManager, PACKAGE_MANAGERS, get_packages_breakdown
+};
 
 // Platform native additions (monitors)
-pub use platform::native::monitors::*;
+pub use platform::native::monitors::{get_monitors_summary, get_all_monitors};
 
 // Lifecycle foreground additions (advanced console helpers and window)
 #[cfg(feature = "window")]
 pub use lifecycle::foreground::window::hide_console_at_startup;
 #[cfg(feature = "window")]
-pub use lifecycle::foreground::window::*;
+pub use lifecycle::foreground::window::{
+    RECT, MONITORINFO, COORD, SMALL_RECT, CONSOLE_SELECTION_INFO, POINT,
+    get_console_rect, get_window_rect, set_window_pos, center_console_window, query_cursor_pos,
+    relaunch_in_conhost_if_needed, should_relaunch_in_conhost, relaunch_in_conhost,
+    is_console_focused,
+    BorderlessConsole, ConsoleTitleGuard,
+    SingleInstanceGuard
+};
 #[cfg(feature = "window")]
-pub use lifecycle::foreground::console::*;
+pub use lifecycle::foreground::console::{
+    query_high_contrast, console_window_rect, update_screensaver_active,
+    update_screensaver_timeout, get_console_title, set_console_title,
+    hide_console_scrollbar
+};
 
 // Core enhancements
 pub use core::SystemInfo;
