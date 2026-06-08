@@ -359,3 +359,22 @@ pub fn query_high_contrast() -> bool {
     (hc.dwFlags & HCF_HIGHCONTRASTON) != 0
 }
 
+pub fn get_local_time_string() -> String {
+    use windows_sys::Win32::Foundation::SYSTEMTIME;
+    use windows_sys::Win32::System::SystemInformation::GetLocalTime;
+    let mut time = std::mem::MaybeUninit::<SYSTEMTIME>::uninit();
+    unsafe {
+        GetLocalTime(time.as_mut_ptr());
+    }
+    let time = unsafe { time.assume_init() };
+    format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+        time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond
+    )
+}
+
+pub fn get_win_accent_color_hex() -> String {
+    let (r, g, b) = query_accent_color();
+    format!("#{:02X}{:02X}{:02X}", r, g, b)
+}
+

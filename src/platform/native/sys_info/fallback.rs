@@ -21,6 +21,9 @@ pub fn query_network_adapters() -> Vec<NetworkAdapterInfo> { vec![] }
 #[cfg(feature = "widgets")]
 pub fn get_dwm_accent_color() -> ratatui::style::Color { ratatui::style::Color::Cyan }
 
+pub fn get_local_time_string() -> String { "2026-06-06 12:00:00".to_string() }
+pub fn get_win_accent_color_hex() -> String { "#00F5FF".to_string() }
+
 #[cfg(test)]
 mod tests {
     use super::*;

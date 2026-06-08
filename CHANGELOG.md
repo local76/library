@@ -5,6 +5,11 @@ All notable changes to rCommon will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.2] - 2026-06-08
+
+### Added
+- **System Info**: Ported `get_local_time_string` and `get_win_accent_color_hex` helpers from `rFetch-tui` to the shared `platform::native::sys_info` module.
+
 ## [3.4.1] - 2026-06-08
 
 ### Added

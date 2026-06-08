@@ -59,6 +59,28 @@ pub fn get_dwm_accent_color() -> ratatui::style::Color {
     }
 }
 
+pub fn get_local_time_string() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        windows::get_local_time_string()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        "2026-06-06 12:00:00".to_string()
+    }
+}
+
+pub fn get_win_accent_color_hex() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        windows::get_win_accent_color_hex()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        "#00F5FF".to_string()
+    }
+}
+
 pub fn get_system_screen_resolution() -> (i32, i32) {
     crate::platform::CurrentPlatform::get_system_screen_resolution()
 }
