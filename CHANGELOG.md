@@ -5,6 +5,14 @@ All notable changes to rCommon will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.19] - 2026-06-08
+
+### Added
+- **Accidental Publish Guard**: Added `publish = false` to `Cargo.toml` to secure the software supply chain by preventing accidental package publication to public registries like crates.io.
+
+### Changed
+- **Supply Chain Security Audit**: Performed a security audit of the complete dependency tree showing 100% compliance with permissive open-source licenses (MIT, Apache-2.0, Zlib, BSL-1.0, Unicode-3.0) and zero known security advisories or vulnerabilities.
+
 ## [3.0.18] - 2026-06-08
 
 ### Changed
