@@ -164,6 +164,12 @@ If you are migrating an older application to `rCommon` version 3.0.0+, update yo
 
 ---
 
+## 🎨 Visual Standards
+
+All applications in the ecosystem share a cohesive user interface style and visual asset layout (e.g. icon containers, neon wireframe elements). See [docs/VISUAL_STANDARDS.md](file:///C:/Users/jeryd/Synology/Home/Projects/local76/rCommon/docs/VISUAL_STANDARDS.md) for details on visual guidelines and branding asset packaging.
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License. See [LICENSE.md](file:///C:/Users/jeryd/Synology/Home/Projects/local76/rCommon/LICENSE.md) for details.
