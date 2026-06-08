@@ -102,6 +102,8 @@ pub use role::application::packages::{
 pub use platform::native::monitors::{get_monitors_summary, get_all_monitors};
 
 // Lifecycle foreground additions (advanced console helpers and window)
+pub use lifecycle::foreground::set_tui_panic_hook;
+
 #[cfg(feature = "window")]
 pub use lifecycle::foreground::window::hide_console_at_startup;
 #[cfg(feature = "window")]

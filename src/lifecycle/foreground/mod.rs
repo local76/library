@@ -14,6 +14,9 @@ pub mod guard;
 #[cfg(feature = "window")]
 pub mod console;
 
+pub mod panic;
+pub use panic::set_tui_panic_hook;
+
 #[cfg(feature = "window")]
 pub use window::{
     RECT, MONITORINFO, COORD, SMALL_RECT, CONSOLE_SELECTION_INFO, POINT,
