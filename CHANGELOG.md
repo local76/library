@@ -4,6 +4,11 @@ All notable changes to rCommon will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [3.0.7] - 2026-06-08
+
+### Changed
+- **Modularized Platform Providers**: Extracted `WindowsPlatform`, `LinuxPlatform`, and `FallbackPlatform` implementations from `sys_info/mod.rs` to a new sub-module `sys_info/providers.rs` to keep individual source files within the 500-line budget limit (reducing `sys_info/mod.rs` line count to ~460 lines).
+
 ## [3.0.6] - 2026-06-08
 
 ### Added
