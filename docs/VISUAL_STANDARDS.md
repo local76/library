@@ -10,18 +10,18 @@ By defining a unified visual identity, we ensure that every utility feels like a
 
 The `local76` applications are local-first, lightweight developer utilities and system monitors. The visual language must reflect this purpose: **precise, high-tech, and minimal**, without feeling corporate or bland.
 
-We define a signature style: **Stroke Standard Glassmorphism**.
+We define a signature style: **Stroke Monogram Duotone** (inspired by the Hugeicons stroke-rounded duotone layout).
 
 ```
 ┌─────────────────────────────────────────┐
 │               SQUIRCLE CONTAINER        │
 │  ┌───────────────────────────────────┐  │
-│  │   GLOSSY / REFLECTIVE TOP GLASS   │  │
+│  │     1.5px STROKE OUTLINE BORDER   │  │
 │  │  ┌─────────────────────────────┐  │  │
-│  │  │    1.5px STROKE OUTLINE     │  │  │
-│  │  │     ON A 24px DETAIL GRID     │  │  │
+│  │  │   2-LETTER MONOGRAM (e.g. rF)│  │  │
+│  │  │   WITH 1.5px STROKE OUTLINE  │  │  │
 │  │  └─────────────────────────────┘  │  │
-│  │   CHAMFERED GLOWING BORDER        │  │
+│  │     SOFT ACCENT COLOR FILL (15%)  │  │
 │  └───────────────────────────────────┘  │
 │               DARK OBSIDIAN BASE        │
 └─────────────────────────────────────────┘
@@ -29,27 +29,27 @@ We define a signature style: **Stroke Standard Glassmorphism**.
 
 ### Key Design Pillars:
 * **Dark Obsidian Base**: Icons use a dark, charcoal-to-deep-blue gradient (`#0B0F19` to `#161C2C`) as the foundation. This mimics the terminal background environment.
-* **Reflective Cover (Glassmorphism)**: A subtle diagonal glare across the top half of the icon, giving it a premium, three-dimensional physical glass appearance.
-* **1.5px Stroke Standard**: The visual metaphors are rendered as **clean, minimalist outline glyphs** utilizing a strict **1.5px stroke width on a 24px grid**. They feature rounded line caps, rounded corner joins, and no solid color fills, ensuring a high-end SaaS utility aesthetic.
-* **App-Specific Accent Colors**: Each icon has a primary neon glow matching its terminal accent:
+* **Stroke-Rounded Monogram**: The foreground utilizes a clean, modern sans-serif outline monogram (representing the utility prefix, e.g. `rF` for `rFetch`) using a strict **1.5px stroke width on a 24px grid**. Line caps and corner joins are rounded, with no solid fills for the glyph itself.
+* **Accent Border & Duotone Fill**: The outer container's border is also drawn with a matching 1.5px stroke, and the container's interior features a semi-transparent filler color (10% to 20% opacity of the accent color), creating a beautiful duotone glassmorphism look.
+* **App-Specific Accent Colors**: Each icon has a primary neon glow and duotone fill matching its terminal accent:
   * **Cyan (`#00F5FF`)**: Core, template, and developer tools.
   * **Amber/Gold (`#FFB900`)**: State, warnings, and hardware monitors.
   * **Green (`#7FBA00`)**: Networks, execution state, and active monitors.
 
 ---
 
-## 2. Visual Metaphors for local76 utilities
+## 2. Visual Monograms for local76 utilities
 
-To make the icon set cohesive, all icons utilize a foreground 1.5px stroke outline on a dark squircle container:
+To make the icon set cohesive, all icons utilize a foreground 1.5px stroke outline monogram on a dark squircle container with corresponding accent and filler colors:
 
-| Application | Accent Color | Visual Metaphor | Symbolic Meaning |
+| Application | Accent Color | Monogram | Symbolic Meaning |
 | :--- | :--- | :--- | :--- |
-| **`rFetch`** | **Neon Cyan** | A minimalist target crosshair or terminal bracket enclosing a glowing hardware core chip. | System polling, hardware query, static gathering. |
-| **`rMonitor`** | **Neon Amber / Gold** | A sleek grid with a rising line graph or a pulse/heartbeat wave. | Live metrics, resource utilization, telemetry. |
-| **`rWifi`** | **Neon Green** | A geometric antenna node radiating clean concentric outline waves. | Signal telemetry, connection state, wireless data. |
-| **`rIdle`** | **Violet / Dark Blue** | A simple crescent moon outline with small constellation coordinate nodes. | Standby state, screensaver, screen locking. |
-| **`rStartup`** | **Neon Orange / Red** | A clean rocket outline pointing upwards, or a standard toggle slider in the 'ON' position. | Service launching, startup boot, initialization. |
-| **`rTemplate`** | **Neon Cyan / Gold** | A draft-grid overlay enclosing a structural serif letter **"I"** layout. | Scaffold creation, skeleton template, boilerplate. |
+| **`rFetch`** | **Neon Cyan** | **`rF`** | System polling, hardware query, static gathering. |
+| **`rMonitor`** | **Neon Amber / Gold** | **`rM`** | Live metrics, resource utilization, telemetry. |
+| **`rWifi`** | **Neon Green** | **`rW`** | Signal telemetry, connection state, wireless data. |
+| **`rIdle`** | **Violet / Dark Blue** | **`rI`** | Standby state, screensaver, screen locking. |
+| **`rStartup`** | **Neon Orange / Red** | **`rS`** | Service launching, startup boot, initialization. |
+| **`rTemplate`** | **Neon Cyan / Gold** | **`rT`** | Scaffold creation, skeleton template, boilerplate. |
 
 ---
 
