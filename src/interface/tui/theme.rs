@@ -56,6 +56,18 @@ pub fn get_theme(dark: bool, accent_color: Color) -> ThemeColors {
     }
 }
 
+/// Parse color from a 7-character hex string (e.g. "#ff0000"), falling back to default cyan if invalid.
+pub fn accent_color_from_hex(hex: &str) -> Color {
+    if hex.starts_with('#') && hex.len() == 7 {
+        let r = u8::from_str_radix(&hex[1..3], 16).unwrap_or(0);
+        let g = u8::from_str_radix(&hex[3..5], 16).unwrap_or(245);
+        let b = u8::from_str_radix(&hex[5..7], 16).unwrap_or(255);
+        Color::Rgb(r, g, b)
+    } else {
+        Color::Rgb(0, 245, 255)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,17 +95,5 @@ mod tests {
         assert_eq!(light.quit_btn, Color::Rgb(200, 50, 50));
         // Verify quit_btn and warning are different semantic colors
         assert_ne!(light.warning, light.quit_btn);
-    }
-}
-
-/// Parse color from a 7-character hex string (e.g. "#ff0000"), falling back to default cyan if invalid.
-pub fn accent_color_from_hex(hex: &str) -> Color {
-    if hex.starts_with('#') && hex.len() == 7 {
-        let r = u8::from_str_radix(&hex[1..3], 16).unwrap_or(0);
-        let g = u8::from_str_radix(&hex[3..5], 16).unwrap_or(245);
-        let b = u8::from_str_radix(&hex[5..7], 16).unwrap_or(255);
-        Color::Rgb(r, g, b)
-    } else {
-        Color::Rgb(0, 245, 255)
     }
 }

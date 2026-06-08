@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Mouse Selection**: Corrected `point_in_rect` calculation to prevent highlighting and copying the entire line during precise single-row mouse clicks or drags.
+- **Compiler & Linter Warnings**: Resolved all static analysis issues flagged by Clippy inside `theme.rs`, `pulsing_waves.rs`, `tui_bootstrap.rs`, and `effects/mod.rs` (redundant casts, layout ordering, default trait implementations, and assertion simplifications).
 
 ## [3.4.3] - 2026-06-08
 

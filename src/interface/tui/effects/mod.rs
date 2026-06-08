@@ -272,7 +272,7 @@ mod tests {
         comets.set_active(false);
         comets.draw(&mut grid, 20, 10);
         // After inactive, no new cells written. Particles still may have positions.
-        assert!(comets.particles.len() > 0);
+        assert!(!comets.particles.is_empty());
     }
 
     #[test]
@@ -283,7 +283,7 @@ mod tests {
         let mut grid = vec![TerminalCell::default(); 200];
         glyphs.draw(&mut grid, 20, 10);
         // After update, internal time advanced (we can't read it directly, but no panic is enough)
-        assert!(glyphs.glyphs.len() > 0);
+        assert!(!glyphs.glyphs.is_empty());
     }
 
     #[test]

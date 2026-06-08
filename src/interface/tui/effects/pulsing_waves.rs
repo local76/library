@@ -106,7 +106,7 @@ impl PulsingWaves {
                         let t = (y as f32 / rows as f32).clamp(0.0, 1.0);
                         let (r, g, b) = resolve_color(self.palette, t);
                         let intensity = (160.0 + self.pulse * 95.0) as u8;
-                        let bucket = (offset.unsigned_abs() as usize).min(self.char_pool.len() - 1);
+                        let bucket = offset.unsigned_abs().min(self.char_pool.len() - 1);
                         let ch = match self.style {
                             Style::Flared if self.pulse > 0.7 => '~',
                             Style::Trailing => self.char_pool[bucket],

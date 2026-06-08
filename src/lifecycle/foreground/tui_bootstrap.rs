@@ -60,6 +60,12 @@ mod imp {
         }
     }
 
+    impl Default for TerminalGuard {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
     impl Drop for TerminalGuard {
         fn drop(&mut self) {
             if self.active {
