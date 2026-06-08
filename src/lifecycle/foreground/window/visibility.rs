@@ -11,6 +11,11 @@ use super::types::{get_console_hwnd, SW_HIDE};
 pub fn hide_console_at_startup() -> Option<*mut std::ffi::c_void> {
     #[cfg(target_os = "windows")]
     {
+        let (_, terminal) = crate::sys_info::query_shell_and_terminal();
+        if terminal != "Windows Console Host" {
+            return None;
+        }
+
         let hwnd = unsafe { get_console_hwnd() }?;
         unsafe {
             windows_sys::Win32::UI::WindowsAndMessaging::ShowWindow(
