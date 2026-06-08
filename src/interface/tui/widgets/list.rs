@@ -78,13 +78,26 @@ impl<'a> Widget for AccentList<'a> {
     fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer) {
         let block = Block::default();
         let inner_area = block.inner(area);
+        if inner_area.height == 0 {
+            return;
+        }
+
+        let height = inner_area.height as usize;
+        let start_index = if self.items.len() <= height {
+            0
+        } else {
+            if self.selected_index < height / 2 {
+                0
+            } else if self.selected_index + height / 2 >= self.items.len() {
+                self.items.len() - height
+            } else {
+                self.selected_index - height / 2
+            }
+        };
 
         let mut lines = Vec::new();
-        for (idx, item) in self.items.iter().enumerate() {
-            if idx >= inner_area.height as usize {
-                break;
-            }
-
+        for idx in start_index..std::cmp::min(self.items.len(), start_index + height) {
+            let item = &self.items[idx];
             if idx == self.selected_index {
                 let bullet_style = if self.focused {
                     Style::default()

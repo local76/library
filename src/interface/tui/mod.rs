@@ -30,7 +30,7 @@ pub mod screensaver;
 
 // Re-export for convenience under tui::
 #[cfg(feature = "widgets")]
-pub use widgets::{AccentColors, AccentTheme, AccentGauge, AccentList, AccentTabs, AccentTextBox, ToastBox, ToastKind};
+pub use widgets::{AccentColors, AccentTheme, AccentGauge, AccentList, AccentTabs, AccentTextBox, ToastBox, ToastKind, AccentScrollbar};
 #[cfg(feature = "effects")]
 pub use effects::{TuiEffect, Particle, RainDrop, MatrixRain, SimpleParticles, GravityParticles, GravityCenter, RainEffect, FireEffect, render_logo_block};
 pub use text::{TextAlignment, wrap_text, align_line};

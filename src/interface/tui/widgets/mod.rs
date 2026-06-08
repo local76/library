@@ -8,6 +8,7 @@
 pub mod colors;
 pub mod gauge;
 pub mod list;
+pub mod scrollbar;
 pub mod tabs;
 pub mod textbox;
 pub mod toast;
@@ -15,6 +16,7 @@ pub mod toast;
 pub use colors::{AccentColors, AccentTheme};
 pub use gauge::AccentGauge;
 pub use list::AccentList;
+pub use scrollbar::AccentScrollbar;
 pub use tabs::AccentTabs;
 pub use textbox::AccentTextBox;
 pub use toast::{ToastBox, ToastKind};
