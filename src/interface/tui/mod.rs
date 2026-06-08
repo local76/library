@@ -63,7 +63,7 @@ pub use effects::{
     FallingComets, PulsingGlyphs, PulsingWaves, FlowingBlocks, PulledBlocks,
     RisingGlyphs, PulsingParticles,
 };
-pub use text::{TextAlignment, wrap_text, align_line};
+pub use text::{TextAlignment, wrap_text, align_line, char_width, visible_len, visible_split};
 #[cfg(feature = "effects")]
 pub use screensaver::{Screensaver, ScreensaverState, ScreensaverEffect, ScreensaverRenderer};
 pub use constants::{MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT};

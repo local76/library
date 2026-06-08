@@ -99,6 +99,63 @@ pub fn align_line(line: &str, width: usize, alignment: TextAlignment) -> String 
     }
 }
 
+/// Helper to determine the visual character column width for Unicode/emojis.
+pub fn char_width(c: char) -> usize {
+    let cp = c as u32;
+    if cp >= 0x1F000 {
+        2
+    } else if cp == 0xFE0F {
+        0
+    } else {
+        1
+    }
+}
+
+/// Helper to count only the printable/visible character columns in an ANSI-escaped string.
+pub fn visible_len(s: &str) -> usize {
+    let mut len = 0;
+    let mut in_escape = false;
+    for c in s.chars() {
+        if c == '\x1b' {
+            in_escape = true;
+        } else if in_escape {
+            if c == 'm' {
+                in_escape = false;
+            }
+        } else {
+            len += char_width(c);
+        }
+    }
+    len
+}
+
+/// Helper to split an ANSI-escaped string at a specific visual character column.
+pub fn visible_split(s: &str, split_at: usize) -> (String, String) {
+    let mut visible_count = 0;
+    let mut in_escape = false;
+    let mut split_byte_idx = s.len();
+
+    for (byte_idx, c) in s.char_indices() {
+        if visible_count >= split_at && !in_escape {
+            split_byte_idx = byte_idx;
+            break;
+        }
+        if c == '\x1b' {
+            in_escape = true;
+        } else if in_escape {
+            if c == 'm' {
+                in_escape = false;
+            }
+        } else {
+            visible_count += char_width(c);
+        }
+    }
+
+    let left = s[..split_byte_idx].to_string();
+    let right = s[split_byte_idx..].to_string();
+    (left, right)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
