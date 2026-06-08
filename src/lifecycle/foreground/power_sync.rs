@@ -4,11 +4,12 @@
 //!
 //! Encapsulates the ~30-line "every 5s check battery, every 2.5s check theme, double
 //! tick rate when on battery" boilerplate that lives in every r* TUI's main loop.
+//!
+//! Returns a platform-neutral (R,G,B) accent color so this module does not need
+//! the `ratatui` crate directly. Callers convert to `ratatui::style::Color` themselves.
 
 use std::time::{Duration, Instant};
 
-use crate::lifecycle::background::file_log;
-use crate::lifecycle::foreground::identity;
 use crate::platform::native::sys_info;
 
 /// How often to re-query power status (5 s).
@@ -25,10 +26,10 @@ pub struct PowerThrottle {
     last_theme_check: Instant,
     pub on_battery: bool,
     pub dark_mode: bool,
-    pub accent_color: ratatui::style::Color,
+    pub accent_color: (u8, u8, u8),
     last_power_state: bool,
     last_dark: bool,
-    last_accent: ratatui::style::Color,
+    last_accent: (u8, u8, u8),
     pub theme_mode: String,
 }
 
@@ -42,17 +43,15 @@ impl PowerThrottle {
         let mode = theme_mode.into();
         let dark = resolve_dark(&mode);
         let accent = sys_info::query_accent_color();
-        let (r, g, b) = accent;
-        let accent_color = ratatui::style::Color::Rgb(r, g, b);
         Self {
             last_power_check: Instant::now(),
             last_theme_check: Instant::now(),
             on_battery,
             dark_mode: dark,
-            accent_color,
+            accent_color: accent,
             last_power_state,
             last_dark: dark,
-            last_accent: accent_color,
+            last_accent: accent,
             theme_mode: mode,
         }
     }
@@ -76,7 +75,6 @@ impl PowerThrottle {
         } else {
             "AC Power (Full Speed)"
         };
-        file_log::log_message("POWER_SYNC", &format!("Power source changed. Status: {}", state));
         Some(state.to_string())
     }
 
@@ -87,8 +85,7 @@ impl PowerThrottle {
         }
         self.last_theme_check = Instant::now();
         let current_dark = resolve_dark(&self.theme_mode);
-        let (r, g, b) = sys_info::query_accent_color();
-        let current_accent = ratatui::style::Color::Rgb(r, g, b);
+        let current_accent = sys_info::query_accent_color();
         if current_dark == self.last_dark && current_accent == self.last_accent {
             return false;
         }
@@ -97,15 +94,6 @@ impl PowerThrottle {
         self.last_accent = current_accent;
         self.dark_mode = current_dark;
         self.accent_color = current_accent;
-        if changed {
-            file_log::log_message(
-                "THEME_SYNC",
-                &format!(
-                    "Theme changed. Dark: {}, Accent RGB({}, {}, {})",
-                    current_dark, r, g, b
-                ),
-            );
-        }
         changed
     }
 
@@ -128,8 +116,8 @@ impl PowerThrottle {
         self.dark_mode
     }
 
-    /// Returns the current accent color.
-    pub fn accent(&self) -> ratatui::style::Color {
+    /// Returns the current accent color as an (R, G, B) tuple.
+    pub fn accent(&self) -> (u8, u8, u8) {
         self.accent_color
     }
 }
@@ -142,18 +130,13 @@ fn resolve_dark(theme_mode: &str) -> bool {
     }
 }
 
-/// Returns a friendly banner line like `"alice@workstation"` for the title strip.
-pub fn banner_user_host() -> String {
-    identity::user_host()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_throttle_initial() {
-        let t = PowerThrottle::new("auto");
+        let mut t = PowerThrottle::new("auto");
         // Just constructed; no battery or theme change yet.
         assert!(t.tick_power().is_none());
         assert!(!t.tick_theme());

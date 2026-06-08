@@ -2,11 +2,12 @@
 //!
 //! **Taxonomy Classification**: Execution State (Lifecycle - Foreground) + Platform (Native).
 
-pub mod types;
+pub mod drag_to_move;
 pub mod position;
 pub mod relaunch;
-pub mod visibility;
 pub mod style;
+pub mod types;
+pub mod visibility;
 
 pub use types::{
     RECT, MONITORINFO, COORD, SMALL_RECT, CONSOLE_SELECTION_INFO, POINT,

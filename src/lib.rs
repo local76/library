@@ -75,6 +75,8 @@ pub use lifecycle::background::notification;
 #[cfg(feature = "clipboard")]
 pub use lifecycle::background::clipboard;
 pub use lifecycle::background::daemon;
+#[cfg(feature = "window")]
+pub use lifecycle::foreground::identity;
 
 // =====================================================
 // 3. Platform & Architecture (Deployment)

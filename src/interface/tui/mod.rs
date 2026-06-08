@@ -27,7 +27,11 @@ pub mod theme;
 #[cfg(feature = "widgets")]
 pub mod markdown;
 #[cfg(feature = "widgets")]
+pub mod markdown_viewer;
+#[cfg(feature = "widgets")]
 pub mod layout;
+#[cfg(feature = "widgets")]
+pub mod status;
 #[cfg(feature = "effects")]
 pub mod effects;
 pub mod text;
@@ -37,11 +41,19 @@ pub mod constants;
 
 // Re-export for convenience under tui::
 #[cfg(feature = "widgets")]
-pub use widgets::{AccentColors, AccentTheme, AccentGauge, AccentList, AccentTabs, AccentTextBox, TextBox, ToastBox, ToastKind, AccentScrollbar, draw_title_banner, draw_effect_preview, ButtonRect};
+pub use widgets::{
+    AccentColors, AccentTheme, AccentGauge, AccentList, AccentTabs, AccentTextBox, TextBox,
+    ToastBox, ToastKind, AccentScrollbar, draw_title_banner, draw_effect_preview, ButtonRect,
+    MouseSelection, is_too_small, render_too_small_warning,
+};
 #[cfg(feature = "widgets")]
 pub use theme::{ThemeColors, get_theme};
 #[cfg(feature = "widgets")]
 pub use markdown::{parse_markdown_to_lines, draw_markdown_modal};
+#[cfg(feature = "widgets")]
+pub use markdown_viewer::MarkdownViewerState;
+#[cfg(feature = "widgets")]
+pub use status::StatusBar;
 #[cfg(feature = "widgets")]
 pub use layout::{centered_rect, format_help_row};
 #[cfg(feature = "effects")]

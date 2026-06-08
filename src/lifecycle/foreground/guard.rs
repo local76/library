@@ -65,14 +65,14 @@ impl SingleInstanceGuard {
             use std::os::unix::io::AsRawFd;
             let exe_name = get_exe_name();
             let socket_path = format!("/tmp/{}_single_instance.sock", exe_name);
-            
+
             let file = OpenOptions::new()
                 .read(true)
                 .write(true)
                 .create(true)
                 .open(&socket_path)
                 .map_err(|e| crate::error::RcommonError::Guard(format!("Failed to open lock file: {}", e)))?;
-                
+
             // Call flock(fd, LOCK_EX | LOCK_NB)
             // LOCK_EX = 2, LOCK_NB = 4
             let res = unsafe { flock(file.as_raw_fd(), 6) };
@@ -94,6 +94,27 @@ impl SingleInstanceGuard {
         #[cfg(not(any(target_os = "windows", target_os = "linux")))]
         {
             Ok(SingleInstanceGuard { handle: SingleInstanceHandle::None })
+        }
+    }
+
+    /// Try to acquire the single-instance lock. On failure, log the error to the
+    /// `file_log`, print to stderr, and exit the process with status 1.
+    /// Returns the guard on success.
+    ///
+    /// `app_label` is used purely for the diagnostic log message.
+    #[allow(unused_variables)]
+    pub fn try_new_or_exit(app_label: &str) -> Self {
+        match Self::try_new() {
+            Ok(g) => g,
+            Err(e) => {
+                #[cfg(feature = "event-log")]
+                crate::lifecycle::background::file_log::log_message(
+                    "ERROR",
+                    &format!("SingleInstanceGuard blocked launch of {}: {}", app_label, e),
+                );
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
         }
     }
 }

@@ -35,13 +35,6 @@ impl StatusBar {
         self.last_set = Some(Instant::now());
     }
 
-    /// Show `msg` and log it (caller decides level).
-    pub fn set_logged(&mut self, msg: impl Into<String>) {
-        let m = msg.into();
-        crate::lifecycle::background::file_log::log_message("INFO", &m);
-        self.set(m);
-    }
-
     /// If the decay has elapsed, revert to the default message.
     pub fn tick(&mut self) {
         if let Some(t) = self.last_set {

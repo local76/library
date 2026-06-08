@@ -92,7 +92,8 @@ impl MouseSelection {
             return None;
         }
         let (start, end) = (self.start?, self.end?);
-        let buf = f.buffer();
+        // Highlight uses buffer_mut; for reading the symbol we can borrow the same buffer.
+        let buf = f.buffer_mut();
         let width = buf.area.width;
         let height = buf.area.height;
         let (col1, row1) = start;
@@ -105,7 +106,7 @@ impl MouseSelection {
         for y in 0..height {
             for x in 0..width {
                 if point_in_rect(x, y, col1, row1, col2, row2) {
-                    let cell = &buf[(x, y)];
+                    let symbol = buf[(x, y)].symbol().to_string();
                     if current_row != Some(y) {
                         if current_row.is_some() {
                             selected_text.push_str(current_line.trim_end());
@@ -114,7 +115,7 @@ impl MouseSelection {
                         }
                         current_row = Some(y);
                     }
-                    current_line.push_str(cell.symbol());
+                    current_line.push_str(&symbol);
                 }
             }
         }

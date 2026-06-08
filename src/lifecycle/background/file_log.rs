@@ -11,6 +11,7 @@ use std::sync::{Mutex, OnceLock};
 static EVENT_LOG_ENABLED: AtomicBool = AtomicBool::new(false);
 static EVENT_SOURCE: OnceLock<String> = OnceLock::new();
 static LOG_FILE: OnceLock<Mutex<Option<File>>> = OnceLock::new();
+static LOG_APP_NAME: OnceLock<String> = OnceLock::new();
 
 /// Set the event source name for Windows Event Log / Syslog.
 pub fn set_event_source(name: &str) {
@@ -32,11 +33,27 @@ pub fn is_event_log_enabled() -> bool {
     EVENT_LOG_ENABLED.load(Ordering::Relaxed)
 }
 
+/// Set the per-app log file folder name (e.g. `"rfetch"`, `"rmonitor"`, `"rwifi"`, `"rstart"`).
+/// Subsequent calls to `log_message` will write to `%APPDATA%\<app_name>\log.txt`.
+/// Subsequent calls to `get_appdata_log_path` will return the same path.
+///
+/// Once set, it cannot be changed (uses an internal `OnceLock`). Calling this more
+/// than once silently no-ops.
+pub fn set_log_app_name(name: &str) {
+    let _ = LOG_APP_NAME.set(name.to_string());
+}
+
+fn get_log_app_name() -> &'static str {
+    LOG_APP_NAME.get_or_init(|| "rTmp".to_string())
+}
+
 /// Helper to resolve the standard AppData folder for diagnostics logging.
+/// Path: `%APPDATA%\<app_name>\log.txt` where `<app_name>` is set via [`set_log_app_name`].
+/// Default folder name (before `set_log_app_name` is called) is `"rTmp"`.
 pub fn get_appdata_log_path() -> Option<PathBuf> {
     std::env::var("APPDATA").ok().map(|appdata| {
         std::path::PathBuf::from(appdata)
-            .join("rTmp")
+            .join(get_log_app_name())
             .join("log.txt")
     })
 }

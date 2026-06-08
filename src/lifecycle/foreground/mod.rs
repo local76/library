@@ -13,7 +13,11 @@ pub mod window;
 pub mod guard;
 #[cfg(feature = "window")]
 pub mod console;
-
+#[cfg(feature = "window")]
+pub mod identity;
+#[cfg(all(feature = "window", feature = "widgets"))]
+pub mod tui_bootstrap;
+pub mod power_sync;
 pub mod panic;
 pub use panic::set_tui_panic_hook;
 
@@ -26,8 +30,12 @@ pub use window::{
     hide_console_at_startup, is_console_focused,
     BorderlessConsole, ConsoleTitleGuard,
     SingleInstanceGuard,
+    drag_to_move::WindowDrag,
 };
 #[cfg(feature = "window")]
 pub use console::{
     console_window_rect, update_screensaver_active, update_screensaver_timeout, get_console_title, set_console_title, hide_console_scrollbar,
 };
+#[cfg(feature = "window")]
+pub use identity::{hostname, os_str, user_host, username};
+pub use power_sync::PowerThrottle;

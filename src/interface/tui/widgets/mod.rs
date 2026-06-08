@@ -6,18 +6,22 @@
 //! - **Focused**: Controls visual emphasis. Focused widgets render with active accent styling (active colors, bold, bright text). Unfocused widgets render with muted, dimmed borders and indicators to preserve visual hierarchy in tab/focus layouts.
 
 pub mod colors;
+pub mod effect_preview;
 pub mod gauge;
+pub mod layout_guard;
 pub mod list;
+pub mod mouse_selection;
 pub mod scrollbar;
 pub mod tabs;
 pub mod textbox;
-pub mod toast;
 pub mod title_banner;
-pub mod effect_preview;
+pub mod toast;
 
 pub use colors::{AccentColors, AccentTheme};
 pub use gauge::AccentGauge;
+pub use layout_guard::{is_too_small, render_too_small_warning};
 pub use list::AccentList;
+pub use mouse_selection::MouseSelection;
 pub use scrollbar::AccentScrollbar;
 pub use tabs::AccentTabs;
 pub use textbox::{AccentTextBox, TextBox};
