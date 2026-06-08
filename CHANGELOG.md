@@ -5,6 +5,17 @@ All notable changes to rCommon will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-06-08
+
+### Added
+- **Verb × Noun Effects Taxonomy**: Structured TUI effects in `interface::tui::effects` into orthogonal dimensions (Verb, Noun, Style, Palette, Speed, Direction, Density).
+- **New Visual Effects**: Added 8 new effects (`FallingComets`, `FlowingBlocks`, `PulledBlocks`, `PulsingGlyphs`, `PulsingParticles`, `PulsingWaves`, `RisingGlyphs`, and `RisingFlames`).
+- **Compatibility Aliases**: Exposed deprecated type aliases (`MatrixRain`, `SimpleParticles`, `GravityParticles`, `RainEffect`, `FireEffect`) at the crate root to keep existing consumer apps compiling.
+
+### Changed
+- **Supply Chain Security**: Hardened dependencies by disabling `ratatui`'s default features and enabling only the `crossterm` backend, reducing binary size and dependency attack surface.
+- **Visual Renames**: Renamed legacy TUI effects to follow the taxonomy (e.g. `MatrixRain` -> `FallingGlyphs`, `RainEffect` -> `FallingDroplets`).
+
 ## [3.0.22] - 2026-06-08
 
 ### Changed

@@ -91,6 +91,58 @@ The software's ultimate objective.
 - **Windows/Linux**: Primarily **Platform (Native)** with strong influence on **Lifecycle** (services vs daemons, conhost behavior) and **Role (System)** (registry vs config files, DWM, power APIs). Code uses `#[cfg(target_os = "...")]` and splits (e.g., `platform/native/windows.rs`, `sys_info/windows.rs`).
 - **GitHub**: External to runtime taxonomy. Supports **Platform (Native)** distribution via git dependencies and releases. Also hosts org profile, workflows, and packaging metadata. The monorepo-like local setup (git_push_all, patches) relies on it.
 
+## Effect Naming Taxonomy (Verb × Noun × Style × Palette)
+
+All TUI effects in `interface::tui::effects` follow a 4-dimension naming system. The type name is always **`Verb` + `Noun`** (PascalCase), the file name is the snake_case of the same, and the display name is `"Verb Noun"`.
+
+### Dimensions
+
+| Dimension | Values | Purpose |
+|---|---|---|
+| **Verb** | `Falling`, `Rising`, `Flowing`, `Pulled`, `Pulsing` | Motion model |
+| **Noun** | `Glyphs`, `Particles`, `Droplets`, `Comets`, `Blocks`, `Waves` | Visual unit |
+| **Style** | `Solid`, `Trailing`, `Flared` | Render treatment |
+| **Palette** | `Monochrome(r,g,b)`, `Accent`, `Heat` | Color source |
+
+- **Style** lives in `interface::tui::effects::dimensions::Style` and is exposed as a field on every effect.
+- **Palette** lives in `interface::tui::effects::dimensions::Palette` and is exposed as a field on every effect.
+- All effects expose `with_style(Style)` and `with_palette(Palette)` builder methods.
+- The 4 dimensions are mutually orthogonal and any combination is valid (270 total, ~100 meaningful).
+
+### House Rules
+
+- **Adding a new Verb** requires a CHANGELOG entry justifying that it cannot be expressed as a variant of an existing verb.
+- **Adding a new Noun** requires a CHANGELOG entry justifying that it cannot be expressed as a variant of an existing noun.
+- **Adding a new Style** must be visually distinct (not a color or timing tweak).
+- **Adding a new Palette** must be non-trivial (not just `Monochrome` with math).
+- **Hard caps**: 5 verbs, 6 nouns, 3 styles, 3 palettes. Adding past a cap requires a documented justification.
+
+### Current Catalog (5 effects)
+
+| Type | File | Default Style | Default Palette |
+|---|---|---|---|
+| `FallingGlyphs` | `falling_glyphs.rs` | `Trailing` | `Monochrome(Green)` |
+| `FlowingParticles` | `flowing_particles.rs` | `Solid` | `Monochrome(White)` |
+| `PulledParticles` | `pulled_particles.rs` | `Solid` | `Monochrome(Blue)` |
+| `FallingDroplets` | `falling_droplets.rs` | `Solid` | `Monochrome(Blue)` |
+| `RisingFlames` | `rising_flames.rs` | `Solid` | `Heat` |
+
+### Example Usage
+
+```rust
+use rcommon::interface::tui::effects::{
+    FallingGlyphs, Style, Palette,
+};
+
+// Default: matrix-green with trails
+let mut rain = FallingGlyphs::new(80, 24, 0.35);
+
+// Theme-matched with lens-flare heads
+let mut flare = FallingGlyphs::new(80, 24, 0.35)
+    .with_style(Style::Flared)
+    .with_palette(Palette::Accent);
+```
+
 ## Adding New Code
 
 1. Classify using the taxonomy.

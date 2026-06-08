@@ -136,6 +136,28 @@ pub use platform::native::gpu::{init_headless_gpu, run_compute_shader};
 // Theme enhancements
 pub use platform::native::sys_info::{SystemTheme, query_accent_color, query_system_theme};
 
+// =====================================================
+// Deprecated type aliases (Verb+Noun rename, 3.x -> 3.x+1)
+// =====================================================
+// The 5 TUI effects were renamed in 3.0.17 to follow the Verb × Noun taxonomy
+// (e.g. MatrixRain -> FallingGlyphs). The aliases below keep older r* consumers
+// compiling. New code should use the new names directly.
+#[cfg(feature = "effects")]
+#[deprecated(note = "renamed to FallingGlyphs; use rcommon::interface::tui::effects::FallingGlyphs")]
+pub type MatrixRain = interface::tui::effects::FallingGlyphs;
+#[cfg(feature = "effects")]
+#[deprecated(note = "renamed to FlowingParticles; use rcommon::interface::tui::effects::FlowingParticles")]
+pub type SimpleParticles = interface::tui::effects::FlowingParticles;
+#[cfg(feature = "effects")]
+#[deprecated(note = "renamed to PulledParticles; use rcommon::interface::tui::effects::PulledParticles")]
+pub type GravityParticles = interface::tui::effects::PulledParticles;
+#[cfg(feature = "effects")]
+#[deprecated(note = "renamed to FallingDroplets; use rcommon::interface::tui::effects::FallingDroplets")]
+pub type RainEffect = interface::tui::effects::FallingDroplets;
+#[cfg(feature = "effects")]
+#[deprecated(note = "renamed to RisingFlames; use rcommon::interface::tui::effects::RisingFlames")]
+pub type FireEffect = interface::tui::effects::RisingFlames;
+
 
 
 // =====================================================

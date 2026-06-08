@@ -209,9 +209,9 @@ mod tests {
 
     #[test]
     fn test_effects_implementing_screensaver() {
-        use crate::interface::tui::effects::MatrixRain;
+        use crate::interface::tui::effects::FallingGlyphs;
 
-        let mut rain = MatrixRain::new(10, 5, 0.5);
+        let mut rain = FallingGlyphs::new(10, 5, 0.5);
         assert!(rain.active());
         assert!(rain.focused());
 
@@ -221,7 +221,7 @@ mod tests {
         rain.set_focused(false);
         assert!(!rain.focused());
 
-        // Test Screensaver::init works on MatrixRain
+        // Test Screensaver::init works on FallingGlyphs
         rain.init(15, 10);
         assert_eq!(rain.drops.len(), 7); // (15 * 0.5).max(1) = 7.5 -> 7
     }

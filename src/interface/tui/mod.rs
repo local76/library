@@ -10,7 +10,7 @@
 //! AccentGauge, AccentTextBox, ToastBox) that support focused states for
 //! consistent tab/focus/panel UIs.
 //!
-//! Also includes retro effects (MatrixRain, FireEffect, particles, etc.),
+//! Also includes retro effects (FallingGlyphs, RisingFlames, FlowingParticles, etc.),
 //! TerminalCell grid rendering, and game primitives for terminal UIs.
 //! Used by rIdle, rFetch, rMonitor, rTemplate, rWifi, etc.
 //!
@@ -57,7 +57,12 @@ pub use status::StatusBar;
 #[cfg(feature = "widgets")]
 pub use layout::{centered_rect, format_help_row};
 #[cfg(feature = "effects")]
-pub use effects::{TuiEffect, Particle, RainDrop, MatrixRain, SimpleParticles, GravityParticles, GravityCenter, RainEffect, FireEffect, render_logo_block};
+pub use effects::{
+    TuiEffect, Particle, RainDrop, GravityCenter, render_logo_block,
+    FallingGlyphs, FlowingParticles, PulledParticles, FallingDroplets, RisingFlames,
+    FallingComets, PulsingGlyphs, PulsingWaves, FlowingBlocks, PulledBlocks,
+    RisingGlyphs, PulsingParticles,
+};
 pub use text::{TextAlignment, wrap_text, align_line};
 #[cfg(feature = "effects")]
 pub use screensaver::{Screensaver, ScreensaverState, ScreensaverEffect, ScreensaverRenderer};
