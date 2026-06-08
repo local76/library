@@ -37,6 +37,14 @@ pub struct PowerStatus {
     pub battery_percent: u8,
 }
 
+impl PowerStatus {
+    pub const BATTERY_PERCENT_UNKNOWN: u8 = 255;
+
+    pub fn is_battery_percent_unknown(&self) -> bool {
+        self.battery_percent == Self::BATTERY_PERCENT_UNKNOWN
+    }
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SystemBiosInfo {
     pub manufacturer: String,

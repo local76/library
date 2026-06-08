@@ -15,6 +15,7 @@ pub struct ThemeColors {
     pub username: Color,
     pub help_btn: Color,
     pub quit_btn: Color,
+    pub warning: Color,
 }
 
 /// Factory function to retrieve light or dark theme presets.
@@ -29,6 +30,7 @@ pub fn get_theme(dark: bool, accent_color: Color) -> ThemeColors {
             username: Color::Rgb(255, 215, 0),
             help_btn: Color::Rgb(250, 210, 50),
             quit_btn: Color::Rgb(255, 85, 85),
+            warning: Color::Rgb(255, 85, 85),
         }
     } else {
         ThemeColors {
@@ -40,6 +42,7 @@ pub fn get_theme(dark: bool, accent_color: Color) -> ThemeColors {
             username: Color::Rgb(218, 165, 32),
             help_btn: Color::Rgb(204, 153, 0),
             quit_btn: Color::Rgb(200, 50, 50),
+            warning: Color::Rgb(200, 50, 50),
         }
     }
 }
