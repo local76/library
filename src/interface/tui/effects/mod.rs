@@ -65,6 +65,27 @@ pub use rain::RainEffect;
 pub use fire::FireEffect;
 pub use logo::{render_logo_block, get_system_info};
 
+pub const EFFECT_NAMES: &[&str] = &[
+    "MatrixRain",
+    "SimpleParticles",
+    "GravityParticles",
+    "RainEffect",
+    "FireEffect",
+];
+
+/// Factory to construct a Boxed Screensaver based on its index.
+pub fn make_effect(index: usize, cols: usize, rows: usize) -> Box<dyn crate::interface::tui::screensaver::Screensaver> {
+    let mut saver: Box<dyn crate::interface::tui::screensaver::Screensaver> = match index {
+        0 => Box::new(MatrixRain::new(cols, rows, 0.35)),
+        1 => Box::new(SimpleParticles::new(cols, rows)),
+        2 => Box::new(GravityParticles::new(cols, rows)),
+        3 => Box::new(RainEffect::new(cols, rows)),
+        _ => Box::new(FireEffect::new(cols, rows)),
+    };
+    saver.init(cols, rows);
+    saver
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
