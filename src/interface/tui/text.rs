@@ -26,34 +26,42 @@ pub fn wrap_text(text: &str, max_width: usize) -> Vec<String> {
     let mut lines = Vec::new();
     for paragraph in text.split('\n') {
         let mut current_line = String::new();
+        let mut current_len = 0;
         for word in paragraph.split_whitespace() {
+            let word_len = word.chars().count();
             if current_line.is_empty() {
-                if word.len() > max_width {
-                    // Word is longer than line width, force split it
+                if word_len > max_width {
+                    // Word is longer than line width, force split it using characters
+                    let chars: Vec<char> = word.chars().collect();
                     let mut start = 0;
-                    while start < word.len() {
-                        let end = (start + max_width).min(word.len());
-                        lines.push(word[start..end].to_string());
+                    while start < chars.len() {
+                        let end = (start + max_width).min(chars.len());
+                        lines.push(chars[start..end].iter().collect());
                         start = end;
                     }
                 } else {
                     current_line.push_str(word);
+                    current_len = word_len;
                 }
-            } else if current_line.len() + 1 + word.len() <= max_width {
+            } else if current_len + 1 + word_len <= max_width {
                 current_line.push(' ');
                 current_line.push_str(word);
+                current_len += 1 + word_len;
             } else {
                 lines.push(current_line);
                 current_line = word.to_string();
-                if current_line.len() > max_width {
-                    // Force split
+                current_len = word_len;
+                if current_len > max_width {
+                    // Force split using characters
+                    let chars: Vec<char> = current_line.chars().collect();
                     let mut start = 0;
-                    while start < current_line.len() {
-                        let end = (start + max_width).min(current_line.len());
-                        lines.push(current_line[start..end].to_string());
+                    while start < chars.len() {
+                        let end = (start + max_width).min(chars.len());
+                        lines.push(chars[start..end].iter().collect());
                         start = end;
                     }
                     current_line.clear();
+                    current_len = 0;
                 }
             }
         }
@@ -111,5 +119,16 @@ mod tests {
         assert_eq!(align_line(line, 5, TextAlignment::Left), "abc  ");
         assert_eq!(align_line(line, 5, TextAlignment::Right), "  abc");
         assert_eq!(align_line(line, 5, TextAlignment::Center), " abc ");
+    }
+
+    #[test]
+    fn test_wrap_unicode_word() {
+        // Japanese text: "こんにちは世界" (Hello World)
+        // 7 characters, 21 bytes
+        let text = "こんにちは世界";
+        let wrapped = wrap_text(text, 4);
+        assert_eq!(wrapped.len(), 2);
+        assert_eq!(wrapped[0], "こんにち");
+        assert_eq!(wrapped[1], "は世界");
     }
 }

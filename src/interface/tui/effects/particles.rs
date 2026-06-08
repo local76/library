@@ -100,11 +100,7 @@ impl crate::interface::tui::screensaver::ScreensaverEffect for SimpleParticles {
 
 #[inline]
 fn inv_sqrt(x: f32) -> f32 {
-    let x2 = x * 0.5;
-    let mut i = x.to_bits();
-    i = 0x5f3759df - (i >> 1);
-    let y = f32::from_bits(i);
-    y * (1.5 - (x2 * y * y))
+    x.sqrt().recip()
 }
 
 /// Gravity/particle system from rLife (rIdle-scenes).

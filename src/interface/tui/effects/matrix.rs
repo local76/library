@@ -94,8 +94,10 @@ impl MatrixRain {
                             let ch = if i == 0 {
                                 '█'
                             } else {
-                                let pool_idx = self.rng.next_usize(self.char_pool.len());
-                                self.char_pool[pool_idx]
+                                // Deterministic index based on coordinate space and vertical drop position
+                                // to avoid calling the RNG for every cell on every frame.
+                                let char_idx = (x * 17 + (y as usize + (drop.y * 0.1) as usize) * 31) % self.char_pool.len();
+                                self.char_pool[char_idx]
                             };
                             let intensity = 255 - (i as u8 * 20).min(200);
                             grid[idx] = TerminalCell {
