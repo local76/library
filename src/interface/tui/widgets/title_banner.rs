@@ -5,14 +5,33 @@
 use ratatui::{
     Frame,
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
 };
 use crate::interface::tui::theme::ThemeColors;
 
+/// Represents the boundary coordinates of a clickable button.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ButtonRect {
+    pub y: u16,
+    pub x_start: u16,
+    pub x_end: u16,
+}
+
+impl ButtonRect {
+    pub fn new(y: u16, x_start: u16, x_end: u16) -> Self {
+        Self { y, x_start, x_end }
+    }
+
+    /// Checks if a mouse event coordinate falls inside the button boundary.
+    pub fn contains(&self, mouse_row: u16, mouse_col: u16) -> bool {
+        mouse_row == self.y && mouse_col >= self.x_start && mouse_col < self.x_end
+    }
+}
+
 /// Renders a generic title banner with system metadata and interactive buttons.
-/// Returns `(help_btn_bounds, quit_btn_bounds)` where each bound is `Some((y, start_x, end_x))`.
+/// Returns `(help_btn_bounds, quit_btn_bounds)` as `Option<ButtonRect>`.
 pub fn draw_title_banner(
     f: &mut Frame,
     area: Rect,
@@ -23,7 +42,7 @@ pub fn draw_title_banner(
     username: &str,
     host_name: &str,
     os_str: &str,
-) -> (Option<(u16, u16, u16)>, Option<(u16, u16, u16)>) {
+) -> (Option<ButtonRect>, Option<ButtonRect>) {
     let title_block = Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(theme.border))
@@ -51,12 +70,12 @@ pub fn draw_title_banner(
         let help_offset = 1 + left_len + padding_len;
         let help_start_x = area.x + help_offset as u16;
         let help_end_x = help_start_x + 6;
-        let help = Some((button_y, help_start_x, help_end_x));
+        let help = Some(ButtonRect::new(button_y, help_start_x, help_end_x));
 
         let quit_offset = help_offset + 6 + 3;
         let quit_start_x = area.x + quit_offset as u16;
         let quit_end_x = quit_start_x + 6;
-        let quit = Some((button_y, quit_start_x, quit_end_x));
+        let quit = Some(ButtonRect::new(button_y, quit_start_x, quit_end_x));
 
         let line = Line::from(vec![
             Span::styled(
@@ -69,7 +88,7 @@ pub fn draw_title_banner(
             Span::styled(
                 user_host_str,
                 Style::default()
-                    .fg(Color::Rgb(255, 215, 0))
+                    .fg(theme.username)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(" │ ", Style::default().fg(theme.border)),
@@ -80,49 +99,49 @@ pub fn draw_title_banner(
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(padding_str, Style::default()),
-            // Help button: " help " in yellow background, black text, underlined 'h'
+            // Help button: " help " in themed background, black text, underlined 'h'
             Span::styled(
                 " ",
                 Style::default()
-                    .bg(Color::Rgb(250, 210, 50))
-                    .fg(Color::Black)
+                    .bg(theme.help_btn)
+                    .fg(ratatui::style::Color::Black)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
                 "h",
                 Style::default()
-                    .bg(Color::Rgb(250, 210, 50))
-                    .fg(Color::Black)
+                    .bg(theme.help_btn)
+                    .fg(ratatui::style::Color::Black)
                     .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
             ),
             Span::styled(
                 "elp ",
                 Style::default()
-                    .bg(Color::Rgb(250, 210, 50))
-                    .fg(Color::Black)
+                    .bg(theme.help_btn)
+                    .fg(ratatui::style::Color::Black)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(" │ ", Style::default().fg(theme.border)),
-            // Quit button: " quit " in red background, white text, underlined 'q'
+            // Quit button: " quit " in themed background, white text, underlined 'q'
             Span::styled(
                 " ",
                 Style::default()
-                    .bg(Color::Rgb(255, 85, 85))
-                    .fg(Color::White)
+                    .bg(theme.quit_btn)
+                    .fg(ratatui::style::Color::White)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
                 "q",
                 Style::default()
-                    .bg(Color::Rgb(255, 85, 85))
-                    .fg(Color::White)
+                    .bg(theme.quit_btn)
+                    .fg(ratatui::style::Color::White)
                     .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
             ),
             Span::styled(
                 "uit ",
                 Style::default()
-                    .bg(Color::Rgb(255, 85, 85))
-                    .fg(Color::White)
+                    .bg(theme.quit_btn)
+                    .fg(ratatui::style::Color::White)
                     .add_modifier(Modifier::BOLD),
             ),
         ]);
@@ -131,12 +150,12 @@ pub fn draw_title_banner(
         let help_offset = 1 + ver_str.len() + 3 + user_host_str.len() + 3 + os_str_val.len() + 3;
         let help_start_x = area.x + help_offset as u16;
         let help_end_x = help_start_x + 6;
-        let help = Some((button_y, help_start_x, help_end_x));
+        let help = Some(ButtonRect::new(button_y, help_start_x, help_end_x));
 
         let quit_offset = help_offset + 6 + 3;
         let quit_start_x = area.x + quit_offset as u16;
         let quit_end_x = quit_start_x + 6;
-        let quit = Some((button_y, quit_start_x, quit_end_x));
+        let quit = Some(ButtonRect::new(button_y, quit_start_x, quit_end_x));
 
         let line = Line::from(vec![
             Span::styled(
@@ -149,7 +168,7 @@ pub fn draw_title_banner(
             Span::styled(
                 user_host_str,
                 Style::default()
-                    .fg(Color::Rgb(255, 215, 0))
+                    .fg(theme.username)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(" │ ", Style::default().fg(theme.border)),
@@ -160,49 +179,49 @@ pub fn draw_title_banner(
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(" │ ", Style::default().fg(theme.border)),
-            // Help button: " help " in yellow background, black text, underlined 'h'
+            // Help button: " help " in themed background, black text, underlined 'h'
             Span::styled(
                 " ",
                 Style::default()
-                    .bg(Color::Rgb(250, 210, 50))
-                    .fg(Color::Black)
+                    .bg(theme.help_btn)
+                    .fg(ratatui::style::Color::Black)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
                 "h",
                 Style::default()
-                    .bg(Color::Rgb(250, 210, 50))
-                    .fg(Color::Black)
+                    .bg(theme.help_btn)
+                    .fg(ratatui::style::Color::Black)
                     .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
             ),
             Span::styled(
                 "elp ",
                 Style::default()
-                    .bg(Color::Rgb(250, 210, 50))
-                    .fg(Color::Black)
+                    .bg(theme.help_btn)
+                    .fg(ratatui::style::Color::Black)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(" │ ", Style::default().fg(theme.border)),
-            // Quit button: " quit " in red background, white text, underlined 'q'
+            // Quit button: " quit " in themed background, white text, underlined 'q'
             Span::styled(
                 " ",
                 Style::default()
-                    .bg(Color::Rgb(255, 85, 85))
-                    .fg(Color::White)
+                    .bg(theme.quit_btn)
+                    .fg(ratatui::style::Color::White)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
                 "q",
                 Style::default()
-                    .bg(Color::Rgb(255, 85, 85))
-                    .fg(Color::White)
+                    .bg(theme.quit_btn)
+                    .fg(ratatui::style::Color::White)
                     .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
             ),
             Span::styled(
                 "uit ",
                 Style::default()
-                    .bg(Color::Rgb(255, 85, 85))
-                    .fg(Color::White)
+                    .bg(theme.quit_btn)
+                    .fg(ratatui::style::Color::White)
                     .add_modifier(Modifier::BOLD),
             ),
         ]);

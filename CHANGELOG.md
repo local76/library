@@ -4,6 +4,12 @@ All notable changes to rCommon will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [3.0.10] - 2026-06-08
+
+### Added
+- **ButtonRect Boundary Primitive**: Added `ButtonRect` struct to `interface::tui::widgets::title_banner` for encapsulating button boundary positions and mouse checks.
+- **Theme-aware button colors**: Added `username`, `help_btn`, and `quit_btn` fields to `ThemeColors` to support styling theme-swapped button states.
+
 ## [3.0.9] - 2026-06-08
 
 ### Added

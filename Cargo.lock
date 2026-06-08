@@ -2755,7 +2755,7 @@ dependencies = [
 
 [[package]]
 name = "rcommon"
-version = "3.0.9"
+version = "3.0.10"
 dependencies = [
  "crossterm",
  "eframe",

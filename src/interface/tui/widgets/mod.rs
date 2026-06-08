@@ -22,5 +22,5 @@ pub use scrollbar::AccentScrollbar;
 pub use tabs::AccentTabs;
 pub use textbox::{AccentTextBox, TextBox};
 pub use toast::{ToastBox, ToastKind};
-pub use title_banner::draw_title_banner;
+pub use title_banner::{draw_title_banner, ButtonRect};
 pub use effect_preview::draw_effect_preview;
