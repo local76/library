@@ -135,13 +135,24 @@ impl MouseSelection {
     }
 }
 
-fn point_in_rect(x: u16, y: u16, c1: u16, r1: u16, c2: u16, r2: u16) -> bool {
-    let (cmn_c, cmx_c) = if c1 <= c2 { (c1, c2) } else { (c2, c1) };
-    let (cmn_r, cmx_r) = if r1 <= r2 { (r1, r2) } else { (r2, r1) };
-    y == r1 && r1 == r2 && x >= cmn_c && x <= cmx_c
-        || (y > cmn_r && y < cmx_r)
-        || (y == cmn_r && x >= cmn_c)
-        || (y == cmx_r && x <= cmx_c)
+fn point_in_rect(x: u16, y: u16, col1: u16, row1: u16, col2: u16, row2: u16) -> bool {
+    let (row_start, col_start, row_end, col_end) = if row1 < row2 || (row1 == row2 && col1 <= col2) {
+        (row1, col1, row2, col2)
+    } else {
+        (row2, col2, row1, col1)
+    };
+
+    if y < row_start || y > row_end {
+        false
+    } else if row_start == row_end {
+        y == row_start && x >= col_start && x <= col_end
+    } else if y == row_start {
+        x >= col_start
+    } else if y == row_end {
+        x <= col_end
+    } else {
+        true
+    }
 }
 
 #[cfg(test)]
