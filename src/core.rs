@@ -193,3 +193,7 @@ pub fn is_tui_arg(arg: &str) -> bool {
 pub fn is_cli_arg(arg: &str) -> bool {
     arg.eq_ignore_ascii_case("--cli") || arg.eq_ignore_ascii_case("--non-interactive")
 }
+
+pub fn is_borderless_arg(arg: &str) -> bool {
+    arg.eq_ignore_ascii_case("--borderless") || arg.eq_ignore_ascii_case("-b")
+}

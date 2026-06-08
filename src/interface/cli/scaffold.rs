@@ -12,7 +12,7 @@ use super::doctor::run_doctor;
 
 pub use crate::core::{
     is_help_arg, is_version_arg, is_doctor_arg, is_install_arg, is_debug_arg, is_no_color_arg,
-    is_json_arg, is_high_contrast_arg, is_accessible_arg, is_tui_arg, is_cli_arg,
+    is_json_arg, is_high_contrast_arg, is_accessible_arg, is_tui_arg, is_cli_arg, is_borderless_arg,
 };
 
 
