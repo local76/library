@@ -20,6 +20,11 @@ How the software communicates visually (or non-visually) with the user or other 
 - **GUI: Custom/Game Engine** — Continuous-loop canvas (e.g., egui, custom renderers).
 - **Headless / API** — No UI; communicates with other software (REST, IPC, libraries, daemons exposing APIs).
 
+#### Key Distinctions
+- **CLI**: Line-oriented stdio, sequential output, often stateless per invocation.
+- **TUI**: Grid-based, in-place updates, stateful widgets/navigation, keyboard-driven.
+- **GUI**: Pixel canvas, continuous 2D space, rich mouse input, higher visual fidelity.
+
 ### 2. Execution State (Lifecycle)
 How the OS manages the application's runtime.
 - **Foreground Applications** — Require active user attention, window/terminal focus (console guards, hiding, single-instance, title management).

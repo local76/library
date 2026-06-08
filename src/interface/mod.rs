@@ -10,6 +10,12 @@
 //! - GUI: Native/OS (Standard WIMP interfaces)
 //! - GUI: Custom/Game Engine (Continuous-loop canvas environments)
 //! - Headless / API (no UI, communicates with other software)
+//!
+//! ### Key Distinctions
+//!
+//! - **CLI**: Line-oriented stdio, sequential output, often stateless per invocation.
+//! - **TUI**: Grid-based, in-place updates, stateful widgets/navigation, keyboard-driven.
+//! - **GUI**: Pixel canvas, continuous 2D space, rich mouse input, higher visual fidelity.
 
 #[cfg(feature = "interface-api")]
 pub mod api;   // Headless / API (the piece added for the taxonomy)
