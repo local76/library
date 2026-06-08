@@ -1,6 +1,6 @@
 [package]
 name = "rcommon"
-version = "1.1.0"
+version = "1.9.25"
 authors = ["Jeryd <jerydleuck@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
@@ -29,12 +29,16 @@ windows-sys = { version = "0.59", features = [
     "Win32_System_EventLog",
     "Win32_System_Services",
     "Win32_System_Memory",
+    "Win32_System_IO",
     "Win32_Storage_FileSystem",
     "Win32_System_DataExchange",
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_Graphics_Dwm",
     "Win32_Security",
     "Win32_System_Ole",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_NetworkManagement_Ndis",
+    "Win32_System_Pipes",
 ], optional = true }
 windows = { version = "0.52.0", features = [
     "Data_Xml_Dom",
@@ -42,28 +46,38 @@ windows = { version = "0.52.0", features = [
 ], optional = true }
 
 [features]
-default = ["widgets", "sys-info", "rgb", "clipboard", "service", "event-log", "notification", "window", "reg"]
+default = ["interface-tui", "interface-api", "lifecycle-foreground", "lifecycle-background", "platform-native", "role-system", "role-application"]
+
+# Windows target helpers
+windows-sys = ["dep:windows-sys"]
+
+# Taxonomy-aligned features (preferred for new code)
+interface-tui = ["widgets", "effects"]
+interface-gui = ["gui"]
+interface-api = ["windows-sys"]
+lifecycle-foreground = ["window"]
+lifecycle-background = ["service", "event-log", "notification", "clipboard"]
+platform-native = ["sys-info", "reg"]
+role-system = ["sys-info", "reg", "service", "event-log"]
+role-application = ["rgb"]
+
+# Granular / legacy (kept for compatibility with existing consumers)
 widgets = ["dep:ratatui", "dep:crossterm"]
-sys-info = ["dep:sysinfo", "dep:windows-sys", "dep:winreg"]
+sys-info = ["dep:sysinfo", "windows-sys", "dep:winreg"]
 rgb = []
-
-# Granular platform-agnostic OS integration features
-clipboard = ["dep:windows-sys"]
-service = ["dep:windows-sys"]
-event-log = ["dep:windows-sys"]
+clipboard = ["windows-sys"]
+service = ["windows-sys"]
+event-log = ["windows-sys"]
 notification = ["dep:windows"]
-window = ["dep:windows-sys"]
-reg = ["dep:winreg", "dep:windows-sys"]
-
-# GUI window integration features
+window = ["windows-sys"]
+reg = ["dep:winreg", "windows-sys"]
 gui = ["dep:eframe", "dep:egui"]
-
-# Backwards compatibility legacy feature
-win32 = ["clipboard", "service", "event-log", "notification", "window", "reg", "sys-info"]
+effects = ["widgets", "sys-info", "rgb"]
+win32 = ["clipboard", "service", "event-log", "notification", "window", "reg", "sys-info", "interface-tui", "lifecycle-foreground", "platform-native", "role-system", "role-application"]
 
 [[bin]]
-name = "test_rgb"
-path = "src/bin/test_rgb.rs"
+name = "rgb_diagnostic"
+path = "src/bin/rgb_diagnostic.rs"
 required-features = ["rgb"]
 
 [[bin]]
