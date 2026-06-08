@@ -226,7 +226,11 @@ fn run_rgb_thread(rx: Receiver<RgbCommand>, config: OpenRGBConfig) {
                     } else {
                         let total_dur = flash.end_time.duration_since(flash.start_time).as_secs_f32();
                         let elapsed = now.duration_since(flash.start_time).as_secs_f32();
-                        let t = (elapsed / total_dur).clamp(0.0, 1.0);
+                        let t = if total_dur > 0.0 {
+                            (elapsed / total_dur).clamp(0.0, 1.0)
+                        } else {
+                            1.0
+                        };
                         let r = lerp(flash.target_color.r, flash.start_color.r, t);
                         let g = lerp(flash.target_color.g, flash.start_color.g, t);
                         let b = lerp(flash.target_color.b, flash.start_color.b, t);
@@ -287,6 +291,7 @@ mod tests {
         controller.set_color(RgbColor { r: 255, g: 0, b: 0 });
         controller.set_device_color(1, RgbColor { r: 0, g: 255, b: 0 });
         controller.flash(RgbColor { r: 0, g: 0, b: 255 }, Duration::from_millis(50));
+        controller.flash(RgbColor { r: 0, g: 0, b: 255 }, Duration::from_millis(0)); // Test zero duration (no panic)
         controller.set_active(false);
     }
 }

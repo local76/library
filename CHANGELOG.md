@@ -5,6 +5,11 @@ All notable changes to rCommon will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.17] - 2026-06-08
+
+### Fixed
+- **RGB Flash Zero-Duration Panic**: Added a safety guard in `src/role/application/rgb/controller.rs` to prevent a division-by-zero (producing `NaN` and causing a `.clamp()` panic) when a zero-duration flash command is executed.
+
 ## [3.0.16] - 2026-06-08
 
 ### Added
