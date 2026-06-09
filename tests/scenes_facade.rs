@@ -17,15 +17,15 @@ use std::time::Duration;
 use library::core::screensaver::Screensaver;
 use library::core::TerminalCell;
 use library::role::application::scenes::beams::Beams;
-use library::role::application::scenes::bhop::BhopDashboard;
-use library::role::application::scenes::fire::FireEffect;
-use library::role::application::scenes::fireflies::Fireflies;
-use library::role::application::scenes::fireworks::Fireworks;
-use library::role::application::scenes::life::LifeEffect;
-use library::role::application::scenes::matrix::{Matrix, Matrix as MatrixEffect};
-use library::role::application::scenes::party::Party;
-use library::role::application::scenes::pour::Pour;
-use library::role::application::scenes::unstable::Unstable;
+use library::role::application::scenes::bounce::BhopDashboard;
+use library::role::application::scenes::flame::FireEffect;
+use library::role::application::scenes::gnats::Fireflies;
+use library::role::application::scenes::bursts::Fireworks;
+use library::role::application::scenes::cosmos::LifeEffect;
+use library::role::application::scenes::glyphs::{Matrix, Matrix as MatrixEffect};
+use library::role::application::scenes::disco::Party;
+use library::role::application::scenes::storm::Pour;
+use library::role::application::scenes::chaos::Unstable;
 
 fn render_grid(effect: &mut dyn Screensaver, cols: usize, rows: usize) -> Vec<TerminalCell> {
     // Run a few update ticks so internal state settles into a non-degenerate

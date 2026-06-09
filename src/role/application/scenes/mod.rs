@@ -2,12 +2,12 @@
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 //!
-//! In library 4.1 these effects are migrating here from `trance-scenes/` (now
+//! In library 4.1 these effects migrated here from `trance-scenes/` (now
 //! `screensavers/`). 4.1.0 ships `glyphs` (formerly `matrix`) as the canonical reference impl; the
 //! other 9 land as 4.1.x patch releases. Each effect is a `Screensaver` impl
-//! that renders a TerminalCell grid. The `screensavers/` workspace will eventually
-//! hold only thin shim binaries that wire these effects into the GDI
-//! screen-saver runtime (also moving to library in a later 4.x release).
+//! that renders a TerminalCell grid. The `screensavers/` workspace holds only
+//! thin shim binaries that wire these effects into the GDI screen-saver
+//! runtime.
 //!
 //! All 10 submodules are gated behind `feature = "scenes"`. library's default
 //! features include `scenes`. Apps that don't need the effects can opt out
@@ -16,10 +16,10 @@
 //! To embed an effect in an app:
 //!
 //! ```no_run
-//! use library::role::application::scenes::glyphs::Glyphs;
+//! use library::role::application::scenes::glyphs::Matrix;
 //! use library::core::screensaver::Screensaver;
 //!
-//! let mut effect = Glyphs::new();
+//! let mut effect = Matrix::new();
 //! effect.update(std::time::Duration::from_millis(16), 80, 24);
 //! let mut grid = vec![library::core::TerminalCell::default(); 80 * 24];
 //! effect.draw(&mut grid, 80, 24);
