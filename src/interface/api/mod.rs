@@ -98,7 +98,7 @@ impl IpcServiceClient {
         let mut client = IpcClient::connect(&self.name)?;
         let resp_str = client.send_request(&request.serialize())?;
         IpcResponse::deserialize(&resp_str)
-            .ok_or_else(|| crate::error::libraryError::Ipc("Malformed IPC response".to_string()))
+            .ok_or_else(|| crate::error::LibraryError::Ipc("Malformed IPC response".to_string()))
     }
 }
 

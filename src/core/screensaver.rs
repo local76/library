@@ -143,10 +143,7 @@ mod tests {
     use super::*;
     use crate::core::TerminalCell;
 
-    struct MockSaver {
-        active_flag: bool,
-        focused_flag: bool,
-    }
+    struct MockSaver;
 
     impl Screensaver for MockSaver {
         fn init(&mut self, _cols: usize, _rows: usize) {}
@@ -165,7 +162,7 @@ mod tests {
 
     #[test]
     fn screensaver_works_with_default_state() {
-        let m = MockSaver { active_flag: true, focused_flag: true };
+        let m = MockSaver;
         let mut grid = [TerminalCell::default(); 4];
         m.draw(&mut grid, 2, 2);
         assert_eq!(grid[0].ch, 'X');
@@ -174,7 +171,7 @@ mod tests {
 
     #[test]
     fn duration_takes_over_from_f32() {
-        let mut m = MockSaver { active_flag: true, focused_flag: true };
+        let mut m = MockSaver;
         m.update(Duration::from_millis(16), 10, 5);
     }
 }

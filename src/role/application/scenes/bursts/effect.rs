@@ -2,7 +2,6 @@ use std::time::Duration;
 use crate::core::screensaver::Screensaver;
 use crate::core::{LcgRng, TerminalCell};
 use crate::platform::native::sys_info::get_system_info;
-use crate::role::application::palette::query_current_palette;
 use crate::role::application::rgb::RgbController;
 use crate::role::application::rgb::protocol::RgbColor;
 use super::types::{Rocket, Particle, Star, FIREWORK_COLORS};

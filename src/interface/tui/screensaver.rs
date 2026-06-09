@@ -148,8 +148,6 @@ mod tests {
     use crate::core::screensaver::Screensaver;
 
     struct MockSaver {
-        active: bool,
-        focused: bool,
         update_calls: u32,
     }
 
@@ -177,7 +175,7 @@ mod tests {
     #[test]
     fn tick_duration_invokes_update_and_draw() {
         let mut r = ScreensaverRenderer::new(10, 5, 128);
-        let mut s = MockSaver { active: true, focused: true, update_calls: 0 };
+        let mut s = MockSaver { update_calls: 0 };
         r.tick_duration(&mut s, Duration::from_millis(16));
         assert_eq!(s.update_calls, 1);
         assert_eq!(r.grid()[0].ch, 'M');
@@ -192,7 +190,7 @@ mod tests {
     #[test]
     fn default_screensaver_renders_at_full_brightness() {
         let mut r = ScreensaverRenderer::new(10, 5, 128);
-        let mut s = MockSaver { active: true, focused: true, update_calls: 0 };
+        let mut s = MockSaver { update_calls: 0 };
         r.tick_duration(&mut s, Duration::from_millis(16));
         // 4.0: default `ScreensaverState` blanket gives `focused = true`,
         // so the renderer does NOT dim. The cell renders at full brightness.
@@ -202,7 +200,7 @@ mod tests {
     #[test]
     fn default_screensaver_runs_update() {
         let mut r = ScreensaverRenderer::new(10, 5, 128);
-        let mut s = MockSaver { active: true, focused: true, update_calls: 0 };
+        let mut s = MockSaver { update_calls: 0 };
         r.tick_duration(&mut s, Duration::from_millis(16));
         // 4.0: default `ScreensaverState` blanket gives `active = true`,
         // so the renderer DOES call update.

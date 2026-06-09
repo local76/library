@@ -48,13 +48,13 @@ impl SingleInstanceGuard {
                 )
             };
             if handle.is_null() {
-                return Err(crate::error::libraryError::Guard("Failed to create single-instance mutex.".to_string()));
+                return Err(crate::error::LibraryError::Guard("Failed to create single-instance mutex.".to_string()));
             }
 
             let err = unsafe { windows_sys::Win32::Foundation::GetLastError() };
             if err == windows_sys::Win32::Foundation::ERROR_ALREADY_EXISTS {
                 unsafe { windows_sys::Win32::Foundation::CloseHandle(handle) };
-                return Err(crate::error::libraryError::Guard("Another instance of this application is already running.".to_string()));
+                return Err(crate::error::LibraryError::Guard("Another instance of this application is already running.".to_string()));
             }
 
             Ok(SingleInstanceGuard { handle: SingleInstanceHandle::Windows(handle) })
@@ -71,13 +71,13 @@ impl SingleInstanceGuard {
                 .write(true)
                 .create(true)
                 .open(&socket_path)
-                .map_err(|e| crate::error::libraryError::Guard(format!("Failed to open lock file: {}", e)))?;
+                .map_err(|e| crate::error::LibraryError::Guard(format!("Failed to open lock file: {}", e)))?;
 
             // Call flock(fd, LOCK_EX | LOCK_NB)
             // LOCK_EX = 2, LOCK_NB = 4
             let res = unsafe { flock(file.as_raw_fd(), 6) };
             if res < 0 {
-                return Err(crate::error::libraryError::Guard(
+                return Err(crate::error::LibraryError::Guard(
                     "Another instance of this application is already running.".to_string()
                 ));
             }

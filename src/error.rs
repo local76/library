@@ -7,7 +7,7 @@ use std::error::Error;
 
 /// The primary error type for all operations in the library library.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum libraryError {
+pub enum LibraryError {
     /// Errors occurring during local IPC named pipe or socket operations.
     Ipc(String),
     /// Errors occurring during command-line argument parsing.
@@ -24,7 +24,7 @@ pub enum libraryError {
     Formatting(String),
 }
 
-impl fmt::Display for libraryError {
+impl fmt::Display for LibraryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Ipc(msg) => write!(f, "IPC error: {}", msg),
@@ -38,18 +38,18 @@ impl fmt::Display for libraryError {
     }
 }
 
-impl Error for libraryError {}
+impl Error for LibraryError {}
 
-impl libraryError {
+impl LibraryError {
     /// Check if the error represents a transient IPC connection abort or invalid param
     /// that indicates host shutdown or client disconnection.
     pub fn is_ipc_termination(&self) -> bool {
         match self {
             Self::Ipc(msg) => {
                 let lower = msg.to_lowercase();
-                lower.contains("aborted") 
-                    || lower.contains("invalid") 
-                    || lower.contains("broken pipe") 
+                lower.contains("aborted")
+                    || lower.contains("invalid")
+                    || lower.contains("broken pipe")
                     || lower.contains("connection reset")
                     || lower.contains("pipe is being closed")
             }
@@ -58,14 +58,14 @@ impl libraryError {
     }
 }
 
-/// A specialized `Result` type alias utilizing libraryError.
-pub type Result<T> = std::result::Result<T, libraryError>;
+/// A specialized `Result` type alias utilizing LibraryError.
+pub type Result<T> = std::result::Result<T, LibraryError>;
 
-/// Convenient Result type alias utilizing libraryError.
-pub type libraryResult<T> = Result<T>;
+/// Convenient Result type alias utilizing LibraryError.
+pub type LibraryResult<T> = Result<T>;
 
 // Conversion helpers from std::io::Error
-impl From<std::io::Error> for libraryError {
+impl From<std::io::Error> for LibraryError {
     fn from(err: std::io::Error) -> Self {
         Self::Ipc(err.to_string())
     }

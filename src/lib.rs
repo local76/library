@@ -36,7 +36,7 @@
 pub mod core;
 pub mod error;
 
-pub use error::{libraryError, Result as libraryResult};
+pub use error::{LibraryError, Result as LibraryResult};
 #[cfg(feature = "effects")]
 pub use interface::tui::screensaver::{Screensaver, ScreensaverRenderer};
 
@@ -206,14 +206,14 @@ pub trait DaemonIpcExt {
     ///     }
     /// }).unwrap();
     /// ```
-    fn run_ipc_server<F>(&self, handler: F) -> Result<(), crate::error::libraryError>
+    fn run_ipc_server<F>(&self, handler: F) -> Result<(), crate::error::LibraryError>
     where
         F: Fn(interface::api::IpcRequest) -> interface::api::IpcResponse;
 }
 
 #[cfg(feature = "interface-api")]
 impl DaemonIpcExt for lifecycle::background::daemon::DaemonService {
-    fn run_ipc_server<F>(&self, handler: F) -> Result<(), crate::error::libraryError>
+    fn run_ipc_server<F>(&self, handler: F) -> Result<(), crate::error::LibraryError>
     where
         F: Fn(interface::api::IpcRequest) -> interface::api::IpcResponse
     {
