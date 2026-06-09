@@ -5,6 +5,21 @@ All notable changes to library will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.1] - 2026-06-09
+
+### Renamed
+- **Project rename**: `library` was previously `rcommon` (and `rCommon` in some references). The Cargo package name, all module paths, and the 10 internal screensaver scene subdirectories are now lowercase `library`. The 10 scene subdirectory names now match the lowercase binary names from the [`screensavers`](https://github.com/local76/screensavers) workspace (`beams`, `bounce`, `flame`, `gnats`, `bursts`, `cosmos`, `glyphs`, `disco`, `storm`, `chaos`).
+- **10 effect subdirs renamed**: `rbeams→beams`, `rbhop→bounce`, `rfire→flame`, `rfireflies→gnats`, `rfireworks→bursts`, `rlife→cosmos`, `rmatrix→glyphs`, `rparty→disco`, `rpour→storm`, `runstable→chaos`. The Rust struct names inside each effect (`Beams`, `BhopDashboard`, `FireEffect`, `Fireflies`, `Fireworks`, `LifeEffect`, `Glyphs`, `Party`, `Pour`, `Unstable`) are unchanged — they describe behavior, not the rename.
+
+### Fixed
+- **Test gate**: `tests/screensaver_runtime_facade.rs` is now `[[test]] required-features = ["screensaver-runtime"]`, so `cargo test --release` in the library no longer fails to find the runtime.
+
+### Changed
+- `ARCHITECTURE.md` rewritten in the new register: 4-layer taxonomy, design system, 10-scene matrix, migration cheatsheet, consumers.
+- `docs/DESIGN_SYSTEM.md`, `docs/EMBEDDED_DOCS.md`, `docs/VISUAL_STANDARDS.md` rewritten in the new register. The monograms in the visual-standards doc are now `hl`/`pl`/`sc`/`tr`/`ig` (lowercase app initials).
+- Drop the legacy "r*" and "Local freedom" branding throughout.
+- Pre-existing deprecation warnings (`libraryError` / `libraryResult` / `ScreensaverEffect` re-export) are unchanged.
+
 ## Release process (for maintainers)
 
 ```bash
