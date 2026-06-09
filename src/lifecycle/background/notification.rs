@@ -19,7 +19,7 @@ pub fn show_toast_notification(title: &str, message: &str) {
     let exe_name = std::env::current_exe()
         .ok()
         .and_then(|p| p.file_name().map(|f| f.to_string_lossy().to_string()))
-        .unwrap_or_else(|| "rApp".to_string());
+        .unwrap_or_else(|| "library".to_string());
     let exe_clean = exe_name.strip_suffix(".exe").unwrap_or(&exe_name);
     let app_id = format!("Local76.{}", exe_clean);
     show_toast_notification_with_id(&app_id, title, message);

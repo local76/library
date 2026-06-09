@@ -50,7 +50,7 @@ impl Default for OpenRGBConfig {
         let exe_name = std::env::current_exe()
             .ok()
             .and_then(|p| p.file_name().map(|f| f.to_string_lossy().to_string()))
-            .unwrap_or_else(|| "rApp".to_string());
+            .unwrap_or_else(|| "library".to_string());
         let exe_clean = exe_name.strip_suffix(".exe").unwrap_or(&exe_name).to_string();
 
         Self {

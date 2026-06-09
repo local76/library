@@ -20,7 +20,7 @@ pub fn set_event_source(name: &str) {
 }
 
 fn get_event_source() -> &'static str {
-    EVENT_SOURCE.get_or_init(|| "rApp".to_string())
+    EVENT_SOURCE.get_or_init(|| "library".to_string())
 }
 
 /// Enable or disable Windows Event Log syncing globally.
