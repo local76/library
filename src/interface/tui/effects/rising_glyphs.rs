@@ -25,7 +25,10 @@ pub struct RisingGlyphs {
     pub palette: Palette,
     pub speed: Speed,
     pub density_setting: Density,
+    // 4.0: reserved for future focus/active tracking
+    #[allow(dead_code)]
     active: bool,
+    #[allow(dead_code)]
     focused: bool,
     rng: LcgRng,
 }
@@ -82,10 +85,11 @@ impl RisingGlyphs {
         self
     }
 
-    pub fn update(&mut self, dt: f32, cols: usize, rows: usize) {
+    pub fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
         if !self.active {
             return;
         }
+        let dt = dt.as_secs_f32();
         let m = self.speed.multiplier();
         for g in &mut self.glyphs {
             g.y -= dt * 6.0 * m;
@@ -131,29 +135,14 @@ impl RisingGlyphs {
     }
 }
 
-impl crate::interface::tui::screensaver::ScreensaverState for RisingGlyphs {
-    fn active(&self) -> bool {
-        self.active
-    }
-    fn set_active(&mut self, active: bool) {
-        self.active = active;
-    }
-    fn focused(&self) -> bool {
-        self.focused
-    }
-    fn set_focused(&mut self, focused: bool) {
-        self.focused = focused;
-    }
-}
-
-impl crate::interface::tui::screensaver::ScreensaverEffect for RisingGlyphs {
+impl crate::interface::tui::screensaver::Screensaver for RisingGlyphs {
     fn init(&mut self, cols: usize, rows: usize) {
         *self = Self::new(cols, rows);
     }
-    fn update(&mut self, dt: f32, cols: usize, rows: usize) {
+    fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
         self.update(dt, cols, rows);
     }
-    fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
+    fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
         RisingGlyphs::draw(self, grid, cols, rows);
     }
 }

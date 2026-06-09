@@ -7,8 +7,8 @@ use ratatui::{
     style::{Modifier, Style},
     text::{Line, Span},
 };
-use crate::interface::tui::theme::ThemeColors;
-use crate::interface::tui::text::wrap_text;
+use super::theme::ThemeColors;
+use super::text::wrap_text;
 
 /// Center a rect of specified percentage width and height inside another rect.
 pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {

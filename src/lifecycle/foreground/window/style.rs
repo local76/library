@@ -105,6 +105,91 @@ impl BorderlessConsole {
             }
         }
     }
+
+    pub fn enable_preserving_size() -> Self {
+        #[cfg(target_os = "windows")]
+        {
+            let (_, terminal) = crate::sys_info::query_shell_and_terminal();
+            if terminal != "Windows Console Host" {
+                return BorderlessConsole {
+                    hwnd: std::ptr::null_mut(),
+                    original_style: 0,
+                    original_rect: RECT::default(),
+                    active: false,
+                };
+            }
+
+            let hwnd = match unsafe { get_console_hwnd() } {
+                Some(h) => h,
+                None => {
+                    return BorderlessConsole {
+                        hwnd: std::ptr::null_mut(),
+                        original_style: 0,
+                        original_rect: RECT::default(),
+                        active: false,
+                    };
+                }
+            };
+
+            let original_style = unsafe {
+                windows_sys::Win32::UI::WindowsAndMessaging::GetWindowLongPtrW(
+                    hwnd,
+                    GWL_STYLE,
+                )
+            };
+            let original_rect = unsafe { get_console_window_rect(hwnd) }.unwrap_or_default();
+
+            // Strip border decorations
+            let new_style = original_style & !(WS_DECORATIONS as isize);
+            unsafe {
+                windows_sys::Win32::UI::WindowsAndMessaging::SetWindowLongPtrW(
+                    hwnd,
+                    GWL_STYLE,
+                    new_style,
+                );
+            }
+
+            let width = original_rect.right - original_rect.left;
+            let height = original_rect.bottom - original_rect.top;
+
+            let mut x = 100;
+            let mut y = 100;
+            if let Some(work_rect) = unsafe { get_monitor_work_rect(hwnd) } {
+                let monitor_w = work_rect.right - work_rect.left;
+                let monitor_h = work_rect.bottom - work_rect.top;
+                x = work_rect.left + (monitor_w - width) / 2;
+                y = work_rect.top + (monitor_h - height) / 2;
+            }
+
+            unsafe {
+                windows_sys::Win32::UI::WindowsAndMessaging::SetWindowPos(
+                    hwnd,
+                    std::ptr::null_mut(),
+                    x,
+                    y,
+                    width,
+                    height,
+                    SWP_FRAMECHANGED_NOOP,
+                );
+            }
+
+            BorderlessConsole {
+                hwnd,
+                original_style,
+                original_rect,
+                active: true,
+            }
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            BorderlessConsole {
+                hwnd: std::ptr::null_mut(),
+                original_style: 0,
+                original_rect: RECT::default(),
+                active: false,
+            }
+        }
+    }
 }
 
 impl Drop for BorderlessConsole {

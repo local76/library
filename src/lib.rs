@@ -50,10 +50,13 @@ pub mod interface;
 pub use interface::tui::widgets;
 #[cfg(feature = "effects")]
 pub use interface::tui::effects;
+#[cfg(feature = "widgets")]
 pub use interface::tui::text;
 #[cfg(feature = "effects")]
+#[allow(deprecated)]
 pub use interface::tui::screensaver;
 #[cfg(feature = "gui")]
+#[allow(deprecated)]
 pub use interface::gui::egui_helpers as gui;
 
 // =====================================================

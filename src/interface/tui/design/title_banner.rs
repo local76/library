@@ -9,7 +9,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
 };
-use crate::interface::tui::theme::ThemeColors;
+use super::theme::ThemeColors;
 
 /// Represents the boundary coordinates of a clickable button.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

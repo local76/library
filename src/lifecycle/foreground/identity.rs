@@ -33,6 +33,45 @@ pub fn os_str() -> String {
     query_os_version()
 }
 
+/// Returns the user's default shell (Windows: PowerShell v7.4 if `$PSModulePath`
+/// is set, else `cmd.exe`; POSIX: `$SHELL` env var, default `/bin/bash`).
+/// Used by the rBhop dashboard's "Shell:" field.
+pub fn shell_name() -> String {
+    if cfg!(target_os = "windows") {
+        if std::env::var("PSModulePath").is_ok() {
+            "PowerShell v7.4".to_string()
+        } else {
+            "cmd.exe".to_string()
+        }
+    } else {
+        std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string())
+    }
+}
+
+/// Returns the main monitor's refresh rate in Hz. Windows: queries the
+/// device caps (VREFRESH = 116). Other platforms: returns 60 as a sane default.
+/// Used by the rBhop dashboard's "Display:" field.
+pub fn refresh_rate_hz() -> i32 {
+    #[cfg(target_os = "windows")]
+    {
+        use windows_sys::Win32::Graphics::Gdi::{GetDC, GetDeviceCaps, ReleaseDC};
+        unsafe {
+            let hdc = GetDC(std::ptr::null_mut());
+            if !hdc.is_null() {
+                let rate = GetDeviceCaps(hdc, 116);
+                ReleaseDC(std::ptr::null_mut(), hdc);
+                if rate <= 0 { 144 } else { rate }
+            } else {
+                144
+            }
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        60
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

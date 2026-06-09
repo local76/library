@@ -11,6 +11,9 @@ pub mod rgb;
 pub mod game;
 pub mod packages;  // Package inventory from rFetch etc.
 pub mod formatting;  // Formatting helpers from rFetch etc.
+pub mod palette;  // Backend-agnostic ScreenPalette for cross-renderer color story
+#[cfg(feature = "scenes")]
+pub mod scenes;  // The 10 r* screensaver effects (rLife, rMatrix, rFire, etc.) — formerly in rIdle-scenes/. Move your effect source here in 4.1+. Behind `feature = "scenes"`.
 
 // Re-exports
 pub use rgb::{RgbColor, OpenRGBDevice, parse_device_payload, OpenRGBConfig, OpenRGBClient, device_type_name, RgbCommand, RgbController};

@@ -53,13 +53,35 @@ pub fn count_choco() -> usize {
 }
 
 pub fn count_npm() -> usize {
-    if let Ok(appdata) = std::env::var("APPDATA") {
-        let npm_dir = Path::new(&appdata)
-            .join("npm")
-            .join("node_modules");
-        if npm_dir.exists() {
-            if let Ok(entries) = fs::read_dir(npm_dir) {
-                return entries.count();
+    #[cfg(windows)]
+    {
+        if let Ok(appdata) = std::env::var("APPDATA") {
+            let npm_dir = Path::new(&appdata)
+                .join("npm")
+                .join("node_modules");
+            if npm_dir.exists() {
+                if let Ok(entries) = fs::read_dir(npm_dir) {
+                    return entries.count();
+                }
+            }
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        for path in &["/usr/lib/node_modules", "/usr/local/lib/node_modules"] {
+            let npm_dir = Path::new(path);
+            if npm_dir.exists() {
+                if let Ok(entries) = fs::read_dir(npm_dir) {
+                    return entries.count();
+                }
+            }
+        }
+        if let Ok(home) = std::env::var("HOME") {
+            let npm_dir = Path::new(&home).join(".npm-global").join("lib").join("node_modules");
+            if npm_dir.exists() {
+                if let Ok(entries) = fs::read_dir(npm_dir) {
+                    return entries.count();
+                }
             }
         }
     }
@@ -159,20 +181,26 @@ pub fn count_native() -> usize {
 }
 
 pub fn count_winget() -> usize {
-    if let Ok(local_appdata) = std::env::var("LOCALAPPDATA") {
-        let db_path = Path::new(&local_appdata)
-            .join("Packages")
-            .join("Microsoft.DesktopAppInstaller_8wekyb3d8bbwe")
-            .join("LocalState")
-            .join("Microsoft.Winget.Source_8wekyb3d8bbwe")
-            .join("installed.db");
+    #[cfg(all(windows, feature = "winget"))]
+    {
+        if let Ok(local_appdata) = std::env::var("LOCALAPPDATA") {
+            let db_path = Path::new(&local_appdata)
+                .join("Packages")
+                .join("Microsoft.DesktopAppInstaller_8wekyb3d8bbwe")
+                .join("LocalState")
+                .join("Microsoft.Winget.Source_8wekyb3d8bbwe")
+                .join("installed.db");
 
-        if db_path.exists() {
-            // rusqlite is used in rFetch for this; optional here to avoid extra dep in rCommon core.
-            // Full impl can be enabled via feature or left to apps.
-            // **Feature Stub**: This is a fallback placeholder implementation designed to compile successfully and preserve API parity.
-            // if db_path.exists() { ... full query ... }
-            // For now returns 0; apps can extend.
+            if db_path.exists() {
+                use rusqlite::{Connection, OpenFlags};
+                if let Ok(conn) = Connection::open_with_flags(&db_path, OpenFlags::SQLITE_OPEN_READ_ONLY) {
+                    if let Ok(count) = conn.query_row("SELECT COUNT(*) FROM manifest", [], |row| {
+                        row.get::<_, usize>(0)
+                    }) {
+                        return count;
+                    }
+                }
+            }
         }
     }
     0

@@ -5,6 +5,7 @@
 //!
 //! Classification: Interface (TUI) + Role (Application).
 
+use std::cell::RefCell;
 use crate::core::{LcgRng, TerminalCell};
 use super::dimensions::{Density, Direction, Palette, Speed, Style, resolve_color};
 use super::Particle;
@@ -18,12 +19,17 @@ pub struct FallingComets {
     pub speed: Speed,
     pub direction: Direction,
     pub density_setting: Density,
+    // 4.0: reserved for future focus/active tracking
+    #[allow(dead_code)]
     active: bool,
+    #[allow(dead_code)]
     focused: bool,
     rng: LcgRng,
-    last_drawn: Vec<usize>,
-    last_cols: usize,
-    last_rows: usize,
+    // Cached state mutated inside `draw`. RefCell lets `draw` stay `&self`
+    // for the 4.0 unified ScreensaverEffect trait.
+    last_drawn: RefCell<Vec<usize>>,
+    last_cols: RefCell<usize>,
+    last_rows: RefCell<usize>,
 }
 
 impl FallingComets {
@@ -45,9 +51,9 @@ impl FallingComets {
             active: true,
             focused: true,
             rng,
-            last_drawn: Vec::new(),
-            last_cols: cols,
-            last_rows: rows,
+            last_drawn: RefCell::new(Vec::new()),
+            last_cols: RefCell::new(cols),
+            last_rows: RefCell::new(rows),
         }
     }
 
@@ -88,10 +94,11 @@ impl FallingComets {
         }
     }
 
-    pub fn update(&mut self, dt: f32, cols: usize, rows: usize) {
+    pub fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
         if !self.active {
             return;
         }
+        let dt = dt.as_secs_f32();
         let m = self.speed.multiplier();
         let (sx, sy) = self.direction.signs();
         for p in &mut self.particles {
@@ -104,21 +111,25 @@ impl FallingComets {
         }
     }
 
-    pub fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
+    pub fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
         if !self.active {
             return;
         }
-        if cols != self.last_cols || rows != self.last_rows {
-            self.last_drawn.clear();
-            self.last_cols = cols;
-            self.last_rows = rows;
+        {
+            let lc = *self.last_cols.borrow();
+            let lr = *self.last_rows.borrow();
+            if cols != lc || rows != lr {
+                self.last_drawn.borrow_mut().clear();
+                *self.last_cols.borrow_mut() = cols;
+                *self.last_rows.borrow_mut() = rows;
+            }
         }
-        for &idx in &self.last_drawn {
+        for &idx in self.last_drawn.borrow().iter() {
             if idx < grid.len() {
                 grid[idx] = TerminalCell::default();
             }
         }
-        self.last_drawn.clear();
+        self.last_drawn.borrow_mut().clear();
 
         let trail_len = 8.0_f32;
         for p in &self.particles {
@@ -154,7 +165,7 @@ impl FallingComets {
                             bg: (0, 0, 0),
                             bold: i < 2,
                         };
-                        self.last_drawn.push(idx);
+                        self.last_drawn.borrow_mut().push(idx);
                     }
                 }
             }
@@ -162,29 +173,14 @@ impl FallingComets {
     }
 }
 
-impl crate::interface::tui::screensaver::ScreensaverState for FallingComets {
-    fn active(&self) -> bool {
-        self.active
-    }
-    fn set_active(&mut self, active: bool) {
-        self.active = active;
-    }
-    fn focused(&self) -> bool {
-        self.focused
-    }
-    fn set_focused(&mut self, focused: bool) {
-        self.focused = focused;
-    }
-}
-
-impl crate::interface::tui::screensaver::ScreensaverEffect for FallingComets {
+impl crate::interface::tui::screensaver::Screensaver for FallingComets {
     fn init(&mut self, cols: usize, rows: usize) {
         *self = Self::new(cols, rows);
     }
-    fn update(&mut self, dt: f32, cols: usize, rows: usize) {
+    fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
         self.update(dt, cols, rows);
     }
-    fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
+    fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
         FallingComets::draw(self, grid, cols, rows);
     }
 }

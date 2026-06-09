@@ -8,7 +8,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span},
 };
-use crate::interface::tui::theme::ThemeColors;
+use super::theme::ThemeColors;
 
 /// A lightweight, custom terminal markdown parser returning styled TUI Spans and Lines.
 pub fn parse_markdown_to_lines(content: &str, theme: &ThemeColors) -> Vec<Line<'static>> {

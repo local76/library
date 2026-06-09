@@ -63,6 +63,12 @@ pub enum Style {
 /// temperature). All variants interpret `t` the same way:
 /// - `Monochrome`: ignored, returns the fixed color.
 /// - `Accent`: ignored, returns the OS accent color.
+/// - `AccentDim`: ignored, returns the 35%-dimmed OS accent color (matches
+///   the `dim` channel of `rcommon::role::application::palette::ScreenPalette`).
+/// - `AccentHot`: ignored, returns the +30° hue-rotated accent at lightness 0.55
+///   (matches the `hot` channel of `ScreenPalette`).
+/// - `AccentCool`: ignored, returns the -120° hue-rotated accent at lightness 0.45
+///   (matches the `cool` channel of `ScreenPalette`).
 /// - `Heat`: `t = 0.0` is cold (deep blue), `t = 1.0` is hot (white-hot).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Palette {
@@ -70,6 +76,12 @@ pub enum Palette {
     Monochrome(u8, u8, u8),
     /// Pull color from the OS accent color (DWM/registry on Windows).
     Accent,
+    /// 35%-dimmed OS accent. Mirrors `ScreenPalette::dim`.
+    AccentDim,
+    /// +30° hue-rotated OS accent at lightness 0.55. Mirrors `ScreenPalette::hot`.
+    AccentHot,
+    /// -120° hue-rotated OS accent at lightness 0.45. Mirrors `ScreenPalette::cool`.
+    AccentCool,
     /// Cold-to-hot color map (blue -> cyan -> yellow -> red -> white).
     /// `t` in 0.0..=1.0.
     Heat,
@@ -99,6 +111,15 @@ impl Palette {
 
     /// OS accent palette.
     pub const ACCENT: Palette = Palette::Accent;
+
+    /// OS-accent dim (35% of accent). Mirrors `ScreenPalette::dim`.
+    pub const ACCENT_DIM: Palette = Palette::AccentDim;
+
+    /// OS-accent hot (+30° hue, lightness 0.55). Mirrors `ScreenPalette::hot`.
+    pub const ACCENT_HOT: Palette = Palette::AccentHot;
+
+    /// OS-accent cool (-120° hue, lightness 0.45). Mirrors `ScreenPalette::cool`.
+    pub const ACCENT_COOL: Palette = Palette::AccentCool;
 }
 
 /// Speed preset for an effect. All effects accept this as a `speed: Speed`
@@ -196,11 +217,32 @@ impl Density {
 ///
 /// - `Monochrome(r, g, b)` returns `(r, g, b)` regardless of `t`.
 /// - `Accent` returns the cached OS accent color regardless of `t`.
+/// - `AccentDim` returns the 35%-dimmed OS accent regardless of `t`.
+/// - `AccentHot` returns the +30° hue-rotated accent at lightness 0.55.
+/// - `AccentCool` returns the -120° hue-rotated accent at lightness 0.45.
 /// - `Heat` interpolates the cold-to-hot ramp based on `t` (clamped).
 pub fn resolve_color(palette: Palette, t: f32) -> (u8, u8, u8) {
     match palette {
         Palette::Monochrome(r, g, b) => (r, g, b),
         Palette::Accent => accent_color(),
+        Palette::AccentDim => {
+            let (r, g, b) = accent_color();
+            (
+                (r as f32 * 0.35) as u8,
+                (g as f32 * 0.35) as u8,
+                (b as f32 * 0.35) as u8,
+            )
+        }
+        Palette::AccentHot => {
+            let (r, g, b) = accent_color();
+            let (h, _s, _l) = crate::core::rgb_to_hsl(r, g, b);
+            crate::core::hsl_to_rgb((h + 30.0).rem_euclid(360.0), 0.95, 0.55)
+        }
+        Palette::AccentCool => {
+            let (r, g, b) = accent_color();
+            let (h, _s, _l) = crate::core::rgb_to_hsl(r, g, b);
+            crate::core::hsl_to_rgb((h - 120.0).rem_euclid(360.0), 0.95, 0.45)
+        }
         Palette::Heat => heat_color(t),
     }
 }

@@ -92,6 +92,49 @@ where
         }
     }
 
+    // 4.5 Check WinGet SQLite Database
+    println!("\nChecking WinGet SQLite Database...");
+    #[cfg(all(target_os = "windows", feature = "winget"))]
+    {
+        if let Ok(local_appdata) = std::env::var("LOCALAPPDATA") {
+            let db_path = std::path::Path::new(&local_appdata)
+                .join("Packages")
+                .join("Microsoft.DesktopAppInstaller_8wekyb3d8bbwe")
+                .join("LocalState")
+                .join("Microsoft.Winget.Source_8wekyb3d8bbwe")
+                .join("installed.db");
+
+            if db_path.exists() {
+                use rusqlite::{Connection, OpenFlags};
+                match Connection::open_with_flags(&db_path, OpenFlags::SQLITE_OPEN_READ_ONLY) {
+                    Ok(conn) => {
+                        match conn.query_row("SELECT COUNT(*) FROM manifest", [], |row| {
+                            row.get::<_, usize>(0)
+                        }) {
+                            Ok(count) => {
+                                println!("{} WinGet DB: Readable ({} packages, Path: {:?})", glyphs.status_ok, count, db_path);
+                            }
+                            Err(e) => {
+                                println!("{} WinGet DB: Query failed (Error: {}, Path: {:?})", glyphs.status_err, e, db_path);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        println!("{} WinGet DB: Open failed (Error: {}, Path: {:?})", glyphs.status_err, e, db_path);
+                    }
+                }
+            } else {
+                println!("{} WinGet DB: Not found (Path: {:?})", glyphs.warning, db_path);
+            }
+        } else {
+            println!("{} WinGet DB: Failed (LOCALAPPDATA environment variable not set)", glyphs.status_err);
+        }
+    }
+    #[cfg(not(all(target_os = "windows", feature = "winget")))]
+    {
+        println!("{} WinGet DB: [Skipped - Non-Windows or feature disabled]", glyphs.info);
+    }
+
     // 5. Run Custom Checks
     custom_checks(&glyphs);
 

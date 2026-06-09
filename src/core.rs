@@ -245,3 +245,22 @@ pub fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f32, f32, f32) {
     }
     (h, s, l)
 }
+
+/// Backend-agnostic screensaver trait (no ratatui). See [`screensaver`] module.
+///
+/// In rcommon 4.0 this is the single source of truth for the screensavers used
+/// across r* TUI apps and r* GDI screensaver apps (rIdle-scenes). The ratatui
+/// renderer wrapper lives in `interface::tui::screensaver::ScreensaverRenderer`.
+///
+/// `ScreensaverEffect` is re-exported as a deprecated trait alias for 4.0
+/// back-compat — the method set is identical to `Screensaver`.
+pub mod screensaver;
+#[allow(deprecated)]
+pub use screensaver::{Screensaver, ScreensaverEffect, ScreensaverState};
+
+/// rcommon 4.1: 5x5 block-letter logo renderer. Moved from
+/// `interface::tui::effects::logo` to `core` so both the r* TUI effects
+/// (interface layer) and the r* screensaver effects (role layer) can
+/// import it without violating the 4-layer taxonomy (role is not
+/// allowed to import from interface).
+pub mod logo_block;

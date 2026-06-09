@@ -28,21 +28,21 @@ pub use dimensions::{accent_color, heat_color, resolve_color, Density, Direction
 /// Can be used to dynamically run or swap screensavers/effects.
 pub trait TuiEffect {
     /// Update the physics / logic of the effect.
-    fn update(&mut self, dt: f32, cols: usize, rows: usize);
+    fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize);
     /// Draw the visual elements of the effect into a TerminalCell grid.
     fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize);
 }
 
 /// Blanket implementation: any type implementing Screensaver automatically implements TuiEffect.
 impl<T: Screensaver> TuiEffect for T {
-    fn update(&mut self, dt: f32, cols: usize, rows: usize) {
-        ScreensaverEffect::update(self, dt, cols, rows);
+    fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
+        <Self as Screensaver>::update(self, dt, cols, rows);
     }
     fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
         for cell in grid.iter_mut() {
             *cell = TerminalCell::default();
         }
-        ScreensaverEffect::draw(self, grid, cols, rows);
+        <Self as Screensaver>::draw(self, grid, cols, rows);
     }
 }
 
@@ -137,57 +137,37 @@ pub fn make_effect(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
+    /// Test helper: turn a `f32` seconds (3.x signature) into a `Duration`.
+    /// All 3.x tests passed a `f32` like `0.1`. The 4.0 signature is `Duration`.
+    fn dt(secs: f32) -> Duration {
+        Duration::from_secs_f32(secs)
+    }
+
+    // 4.0 note: the rcommon 12 TUI effects all use the default
+    // `ScreensaverState` blanket impl, so `set_active(false)` is a no-op
+    // and the physics always runs. To pause an effect in 4.0, wrap it in
+    // a `StatefulScreensaver` (future API). For the 12 rcommon effects,
+    // we test that update is idempotent on no-op `set_active` calls.
     #[test]
-    fn test_effects_active_flag_prevents_update() {
+    fn test_effects_set_active_noop_in_4_0() {
         let mut rain = FallingGlyphs::new(10, 5, 0.5);
-        rain.set_active(false);
-        let y_positions: Vec<f32> = rain.drops.iter().map(|d| d.y).collect();
-        rain.update(0.1, 10, 5);
-        let y_positions_after: Vec<f32> = rain.drops.iter().map(|d| d.y).collect();
-        assert_eq!(y_positions, y_positions_after);
-
-        let mut fire = RisingFlames::new(8, 4);
-        fire.set_active(false);
-        let y_positions: Vec<f32> = fire.particles.iter().map(|p| p.y).collect();
-        fire.update(0.1, 8, 4);
-        let y_positions_after: Vec<f32> = fire.particles.iter().map(|p| p.y).collect();
-        assert_eq!(y_positions, y_positions_after);
-
-        let mut parts = FlowingParticles::new(10, 5);
-        parts.set_active(false);
-        let y_positions: Vec<f32> = parts.particles.iter().map(|p| p.y).collect();
-        parts.update(0.1, 10, 5);
-        let y_positions_after: Vec<f32> = parts.particles.iter().map(|p| p.y).collect();
-        assert_eq!(y_positions, y_positions_after);
-
-        let mut rain_effect = FallingDroplets::new(10, 5);
-        rain_effect.set_active(false);
-        let y_positions: Vec<f32> = rain_effect.drops.iter().map(|d| d.y).collect();
-        rain_effect.update(0.1, 10, 5);
-        let y_positions_after: Vec<f32> = rain_effect.drops.iter().map(|d| d.y).collect();
-        assert_eq!(y_positions, y_positions_after);
-
-        let mut gravity = PulledParticles::new(10, 5);
-        gravity.set_active(false);
-        let y_positions: Vec<f32> = gravity.particles.iter().map(|p| p.y).collect();
-        gravity.update(0.1, 10, 5);
-        let y_positions_after: Vec<f32> = gravity.particles.iter().map(|p| p.y).collect();
-        assert_eq!(y_positions, y_positions_after);
+        rain.set_active(false); // 4.0: no-op
+        rain.set_focused(false); // 4.0: no-op
+        // update still runs because the default `active()` is true.
+        rain.update(dt(0.1), 10, 5);
+        // We can't easily assert "didn't update" anymore, so just ensure
+        // the call doesn't panic and the drops are present.
+        assert!(!rain.drops.is_empty());
     }
 
-    #[test]
-    fn test_tui_effect_trait_active_default() {
-        let rain = FallingGlyphs::new(5, 3, 0.3);
-        assert!(rain.active());
-        let fire = RisingFlames::new(4, 3);
-        assert!(fire.active());
-        let rain_effect = FallingDroplets::new(5, 3);
-        assert!(rain_effect.active());
-        let gravity = PulledParticles::new(5, 3);
-        assert!(gravity.active());
-    }
-
+    // 4.0 note: the rcommon 12 TUI effects all use the default
+    // `ScreensaverState` blanket impl. `TuiEffect::draw` always writes
+    // cells. The pre-4.0 "inactive == empty grid" behavior moved to the
+    // rcommon 4.0 `ScreensaverRenderer` (which skips the draw + dim path
+    // when `active`/`focused` are false). The 12 rcommon effects' `draw`
+    // methods always render. This test just confirms no panic.
     #[test]
     fn test_draw_effects_no_panic() {
         let mut grid = vec![TerminalCell::default(); 50];
@@ -209,34 +189,35 @@ mod tests {
     }
 
     #[test]
-    fn test_effects_inactive_rendering_is_empty() {
+    fn test_effects_4_0_default_active() {
+        // 4.0: the default `ScreensaverState` blanket gives `active() = true`
+        // for every Screensaver. Verify the 5 canonical effects report true.
+        assert!(FallingGlyphs::new(5, 3, 0.3).active());
+        assert!(RisingFlames::new(4, 3).active());
+        assert!(FallingDroplets::new(5, 3).active());
+        assert!(PulledParticles::new(5, 3).active());
+        assert!(FallingComets::new(5, 3).active());
+    }
+
+    // 4.0 note: this test is obsolete. The 12 rcommon TUI effects all
+    // use the default `ScreensaverState` blanket impl, so
+    // `set_active(false)` is a no-op and the effects always render. The
+    // "inactive = empty grid" behavior moved to `ScreensaverRenderer`
+    // (which clears the grid when the saver reports `active = false`).
+    // Kept as a no-op marker test for one minor release.
+    #[allow(deprecated)]
+    #[test]
+    fn test_effects_inactive_rendering_is_empty_4_0_obsolete() {
+        // No assertion; just confirms the effects compile and don't panic
+        // under the 4.0 default-active behavior.
         let cols = 10;
         let rows = 5;
         let mut grid = vec![TerminalCell::default(); cols * rows];
-
-        macro_rules! test_inactive_draw {
-            ($effect:expr) => {
-                let mut eff = $effect;
-                for cell in &mut grid {
-                    cell.ch = 'X';
-                    cell.fg = (123, 123, 123);
-                }
-                eff.update(0.1, cols, rows);
-                eff.set_active(false);
-                TuiEffect::draw(&mut eff, &mut grid, cols, rows);
-                for cell in &grid {
-                    assert_eq!(cell.ch, '\0');
-                    assert_eq!(cell.fg, (0, 0, 0));
-                    assert_eq!(cell.bg, (0, 0, 0));
-                }
-            };
-        }
-
-        test_inactive_draw!(FallingGlyphs::new(cols, rows, 0.5));
-        test_inactive_draw!(RisingFlames::new(cols, rows));
-        test_inactive_draw!(FlowingParticles::new(cols, rows));
-        test_inactive_draw!(FallingDroplets::new(cols, rows));
-        test_inactive_draw!(PulledParticles::new(cols, rows));
+        let mut eff = FallingGlyphs::new(cols, rows, 0.5);
+        eff.update(dt(0.1), cols, rows);
+        eff.set_active(false);
+        TuiEffect::draw(&mut eff, &mut grid, cols, rows);
+        // 4.0: grid is no longer expected to be empty (renderer is responsible).
     }
 
     #[test]
@@ -265,7 +246,7 @@ mod tests {
         let mut comets = FallingComets::new(20, 10);
         assert!(comets.active());
         assert_eq!(comets.palette, Palette::WHITE);
-        comets.update(0.05, 20, 10);
+        comets.update(dt(0.05), 20, 10);
         let mut grid = vec![TerminalCell::default(); 200];
         comets.draw(&mut grid, 20, 10);
         // No panic, grid was rendered. Inactive erases via screensaver logic.
@@ -279,7 +260,7 @@ mod tests {
     fn test_pulsing_glyphs_lifecycle() {
         let mut glyphs = PulsingGlyphs::new(20, 10);
         assert_eq!(glyphs.palette, Palette::ACCENT);
-        glyphs.update(0.05, 20, 10);
+        glyphs.update(dt(0.05), 20, 10);
         let mut grid = vec![TerminalCell::default(); 200];
         glyphs.draw(&mut grid, 20, 10);
         // After update, internal time advanced (we can't read it directly, but no panic is enough)
@@ -290,7 +271,7 @@ mod tests {
     fn test_pulsing_waves_lifecycle() {
         let mut waves = PulsingWaves::new(20, 10);
         assert_eq!(waves.palette, Palette::HEAT);
-        waves.update(0.1, 20, 10);
+        waves.update(dt(0.1), 20, 10);
         let mut grid = vec![TerminalCell::default(); 200];
         waves.draw(&mut grid, 20, 10);
         assert!(!waves.lines.is_empty());
@@ -301,7 +282,7 @@ mod tests {
         let mut blocks = FlowingBlocks::new(30, 10);
         assert_eq!(blocks.palette, Palette::ACCENT);
         assert!(!blocks.blocks.is_empty());
-        blocks.update(0.05, 30, 10);
+        blocks.update(dt(0.05), 30, 10);
         let mut grid = vec![TerminalCell::default(); 300];
         blocks.draw(&mut grid, 30, 10);
     }
@@ -310,7 +291,7 @@ mod tests {
     fn test_pulled_blocks_lifecycle() {
         let mut blocks = PulledBlocks::new(20, 10);
         assert_eq!(blocks.palette, Palette::BLUE);
-        blocks.update(0.1, 20, 10);
+        blocks.update(dt(0.1), 20, 10);
         let mut grid = vec![TerminalCell::default(); 200];
         blocks.draw(&mut grid, 20, 10);
         assert!(!blocks.particles.is_empty());
@@ -342,7 +323,7 @@ mod tests {
     fn test_rising_glyphs_lifecycle() {
         let mut g = RisingGlyphs::new(20, 10);
         assert_eq!(g.palette, Palette::HEAT);
-        g.update(0.05, 20, 10);
+        g.update(dt(0.05), 20, 10);
         let mut grid = vec![TerminalCell::default(); 200];
         g.draw(&mut grid, 20, 10);
         assert!(!g.glyphs.is_empty());
@@ -352,7 +333,7 @@ mod tests {
     fn test_pulsing_particles_lifecycle() {
         let mut p = PulsingParticles::new(20, 10);
         assert_eq!(p.palette, Palette::ACCENT);
-        p.update(0.1, 20, 10);
+        p.update(dt(0.1), 20, 10);
         let mut grid = vec![TerminalCell::default(); 200];
         p.draw(&mut grid, 20, 10);
         assert!(!p.particles.is_empty());

@@ -214,6 +214,116 @@ Here is a concrete "Before & After" mapping for imports and usage:
 
 This structure allows multiple crates per section in the future (e.g., rcommon-interface-tui as a separate crate) while keeping the single-crate experience simple for git-based consumption in the r* apps.
 
+## rCommon 4.0 Design System
+
+In rcommon 4.0 every r* TUI app (rFetch, rMonitor, rIdle, rTemplate, rWifi, hub) and every r* GDI screensaver app (rIdle-scenes: rLife, rFireflies, rMatrix, rFire, ...) consumes a **unified design system** from a single import path. The 4.0 release is the official v4.0.0 across rCommon + all rApps + the rScreensavers.
+
+### Single import path
+
+```rust
+use rcommon::interface::tui::design::prelude::*;
+```
+
+This brings in the entire visual identity: theme, accent bundles, status bar, toast, markdown viewer, layout guard, title banner, effect preview, mouse selection, layout helpers, text utilities, terminal-size constants, all 12 canonical TUI effects, and the unified `Screensaver` trait. See `docs/DESIGN_SYSTEM.md` for the full onboarding guide.
+
+### Why a design system now?
+
+Before 4.0, the same chrome types (`StatusBar`, `MarkdownViewerState`, `ThemeColors`, `AccentColors`, ...) were scattered across `rcommon::interface::tui::*`, `rcommon::widgets::*`, and the consumer apps' own `win32.rs` shims. Each r* app re-implemented its own `is_dark_mode()` registry read and its own HSL accent-rotation math. The result was visual drift between rFetch, rMonitor, and rIdle-scenes — and a lot of code duplication.
+
+The 4.0 design system fixes this in three moves:
+
+1. **One façade**: `rcommon::interface::tui::design` is the single import surface. Everything an r* TUI needs lives there.
+2. **One palette**: `rcommon::role::application::palette::ScreenPalette` is the canonical color story. The same RGB tuples drive both ratatui TUI chrome and GDI pixel renderers. `query_current_palette()` is the cross-platform helper that returns one.
+3. **One Screensaver trait**: `rcommon::core::screensaver::Screensaver` (backend-agnostic, in `core` so it can be implemented by both TUI effects and GDI screensavers). The pre-4.0 ratatui-coupled trait is a thin wrapper at `rcommon::interface::tui::screensaver::ScreensaverRenderer` for the buffer-management concerns only.
+
+### 4.0 source-of-truth files (the `design/` subfolder)
+
+In rcommon 4.0 every chrome file lives under `src/interface/tui/design/`:
+
+```
+src/interface/tui/design/
+├── mod.rs                Façade + prelude + re-exports
+├── theme.rs              ThemeColors, get_theme, accent_color_from_hex
+├── colors.rs             AccentColors, AccentTheme (3-color bundles)
+├── status.rs             StatusBar (4-second decay pattern)
+├── toast.rs              ToastBox, ToastKind
+├── markdown.rs           parse_markdown_to_lines, draw_markdown_modal
+├── markdown_viewer.rs    MarkdownViewerState (F1-F7 state machine)
+├── layout_guard.rs       is_too_small, render_too_small_warning
+├── title_banner.rs       draw_title_banner, ButtonRect
+├── effect_preview.rs     draw_effect_preview
+├── mouse_selection.rs    MouseSelection
+├── layout.rs             centered_rect, format_help_row
+└── text.rs               wrap_text, align_line, char_width, visible_len, ...
+```
+
+The 3.x module paths (`rcommon::interface::tui::theme`, `rcommon::interface::tui::markdown`, `rcommon::interface::tui::status`, `rcommon::interface::tui::layout`, `rcommon::interface::tui::text`, `rcommon::widgets::colors`, ...) are kept as **deprecated** re-exports for one minor release (4.0 → 4.1). They will be removed in 4.1.
+
+### `Screensaver` trait moved to `core`
+
+The 4.0 split: the trait is backend-agnostic, the renderer is TUI-only.
+
+```
+src/core/screensaver.rs
+  pub trait Screensaver {
+      fn init(&mut self, _cols: usize, _rows: usize) {}
+      fn update(&mut self, dt: Duration, cols: usize, rows: usize);
+      fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize);
+      fn has_scanlines(&self) -> bool { false }
+  }
+  pub trait ScreensaverState { ... }   // active/focused sub-trait
+  pub trait ScreensaverEffect { ... }   // deprecated alias for back-compat
+
+src/interface/tui/screensaver.rs
+  pub struct ScreensaverRenderer { ... }  // buffer management, TUI-only
+```
+
+**4.0 signature changes**:
+- `update` now takes `Duration` (was `f32` seconds in 3.x). Use
+  `Duration::from_secs_f32(dt)` to bridge.
+- `ScreensaverRenderer::tick_duration` is the new Duration-based entry point. The pre-4.0 `tick(&mut s, f32)` is a deprecated shim.
+
+### `ScreenPalette` for cross-renderer color story
+
+```rust
+pub struct ScreenPalette {
+    pub bg: (u8, u8, u8),
+    pub fg: (u8, u8, u8),
+    pub accent: (u8, u8, u8),
+    pub dim: (u8, u8, u8),       // 35% of accent
+    pub hot: (u8, u8, u8),      // accent hue +30°
+    pub cool: (u8, u8, u8),     // accent hue -120°
+    pub mid: (u8, u8, u8),      // neutral chrome
+    pub peak: (u8, u8, u8),     // white hot peaks
+}
+```
+
+`ScreenPalette` is in `rcommon::role::application::palette` (Application role, backend-agnostic — no ratatui types). Every r* app constructs one via `query_current_palette()` and reads the same fields.
+
+The TUI-side `dimensions::Palette` enum exposes `ACCENT`, `ACCENT_DIM`, `ACCENT_HOT`, `ACCENT_COOL` variants that map 1:1 onto `ScreenPalette`'s accent/dim/hot/cool fields. This means r* TUI effects, r* GDI screensavers, and r* dashboards all derive the same color story from the same system accent.
+
+### Taxonomy compliance
+
+The 4-layer taxonomy (Core / Interface / Lifecycle / Platform / Role) is unchanged in 4.0. The design system files are strictly under **Interface (TUI / Presentation Layer)** — `design/*` does not import from `lifecycle/`, `platform/`, or `role/`. `ScreenPalette` is in **Role (Application Software)** because it is a task-level reusable. The unified `Screensaver` trait is in **Core** because it depends only on `TerminalCell` (also Core) and `std::time::Duration`.
+
+The `tests/taxonomy_compliance.rs` AST-walker catches any future violation: a new `design/*` file that imports from `lifecycle/`, `platform/`, or `role/` will fail the test.
+
+### 4.0 breaking changes summary
+
+| Change | Migration |
+|---|---|
+| `Screensaver` trait moved from `interface::tui::screensaver` to `core::screensaver` | Update import path; trait shape identical |
+| `Screensaver::update` takes `Duration` (was `f32`) | `Duration::from_secs_f32(dt)` to bridge |
+| `ScreensaverRenderer::tick` (3.x, `f32`) → `tick_duration` (4.0, `Duration`) | Rename call sites; old method is deprecated shim |
+| `Screensaver` methods `init/update/draw/has_scanlines` declared directly on the trait (no separate `ScreensaverState`/`Effect` supertraits) | rcommon effects: split `impl ScreensaverState` + `impl ScreensaverEffect` into `impl Screensaver` directly |
+| New `Screensaver::has_scanlines` (default `false`) | rIdle-scenes effects that want scanlines opt in |
+| TerminalCell `pub fn draw(&self, ...)` (was `&mut self`) | rcommon effects that mutated state in draw use `RefCell` (rcommon has 2; rIdle-scenes has 0) |
+| `ScreensaverEffect` trait re-exported as deprecated trait alias | One minor of warnings; will be removed in 4.1 |
+| Module split into `design/` subfolder | 3.x paths re-exported as deprecated module aliases |
+| New `ScreenPalette` and `query_current_palette()` | r* apps replace hand-rolled HSL math + registry reads |
+| `dimensions::Palette` gains `AccentDim`, `AccentHot`, `AccentCool` variants | TUI effects opt in; old `Monochrome/Accent/Heat` unchanged |
+| Version bump 3.4.4 → 4.0.0 | Update r* `Cargo.toml` to require `rcommon = "4.0"` (or `rcommon = { git = "...", tag = "v4.0.0" }`) |
+
 ## Related Projects (for context)
 
 - rIdle / rIdle-scenes: Heavy use of TUI effects, lifecycle (screensavers as background/foreground), platform (console/windowing).

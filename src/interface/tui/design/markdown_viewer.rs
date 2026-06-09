@@ -5,8 +5,8 @@
 //! Encapsulates the 3 fields (show_markdown, markdown_lines, markdown_scroll) and the
 //! F1-F7 documentation bindings that are duplicated across every r* TUI.
 
-use crate::interface::tui::markdown::{draw_markdown_modal, parse_markdown_to_lines};
-use crate::interface::tui::theme::ThemeColors;
+use super::markdown::{draw_markdown_modal, parse_markdown_to_lines};
+use super::theme::ThemeColors;
 use ratatui::{Frame, layout::Rect, text::Line};
 use std::collections::HashMap;
 

@@ -44,7 +44,10 @@ pub struct FlowingBlocks {
     pub speed: Speed,
     pub direction: Direction,
     pub density_setting: Density,
+    // 4.0: reserved for future focus/active tracking
+    #[allow(dead_code)]
     active: bool,
+    #[allow(dead_code)]
     focused: bool,
     #[allow(dead_code)]
     rng: LcgRng,
@@ -103,10 +106,11 @@ impl FlowingBlocks {
         self
     }
 
-    pub fn update(&mut self, dt: f32, cols: usize, _rows: usize) {
+    pub fn update(&mut self, dt: std::time::Duration, cols: usize, _rows: usize) {
         if !self.active {
             return;
         }
+        let dt = dt.as_secs_f32();
         let m = self.speed.multiplier();
         for b in &mut self.blocks {
             b.x += b.vx * dt * 8.0 * m;
@@ -152,29 +156,14 @@ impl FlowingBlocks {
     }
 }
 
-impl crate::interface::tui::screensaver::ScreensaverState for FlowingBlocks {
-    fn active(&self) -> bool {
-        self.active
-    }
-    fn set_active(&mut self, active: bool) {
-        self.active = active;
-    }
-    fn focused(&self) -> bool {
-        self.focused
-    }
-    fn set_focused(&mut self, focused: bool) {
-        self.focused = focused;
-    }
-}
-
-impl crate::interface::tui::screensaver::ScreensaverEffect for FlowingBlocks {
+impl crate::interface::tui::screensaver::Screensaver for FlowingBlocks {
     fn init(&mut self, cols: usize, rows: usize) {
         *self = Self::new(cols, rows);
     }
-    fn update(&mut self, dt: f32, cols: usize, rows: usize) {
+    fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
         self.update(dt, cols, rows);
     }
-    fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
+    fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
         FlowingBlocks::draw(self, grid, cols, rows);
     }
 }

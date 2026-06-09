@@ -22,11 +22,26 @@ pub struct AppConfig<T: ConfigFields> {
 impl<T: ConfigFields> AppConfig<T> {
     /// Resolves path to `%APPDATA%\<app_name>\<filename>`
     pub fn config_path(app_name: &str, filename: &str) -> Option<PathBuf> {
-        std::env::var("APPDATA").ok().map(|appdata| {
-            std::path::PathBuf::from(appdata)
-                .join(app_name)
-                .join(filename)
-        })
+        #[cfg(windows)]
+        {
+            std::env::var("APPDATA").ok().map(|appdata| {
+                std::path::PathBuf::from(appdata)
+                    .join(app_name)
+                    .join(filename)
+            })
+        }
+        #[cfg(not(windows))]
+        {
+            let base = std::env::var("XDG_CONFIG_HOME")
+                .ok()
+                .map(PathBuf::from)
+                .or_else(|| {
+                    std::env::var("HOME").ok().map(|home| {
+                        PathBuf::from(home).join(".config")
+                    })
+                });
+            base.map(|b| b.join(app_name).join(filename))
+        }
     }
 
     /// Load config from file, falling back to defaults on failure or missing file.

@@ -34,7 +34,10 @@ pub struct PulledBlocks {
     pub palette: Palette,
     pub speed: Speed,
     pub density_setting: Density,
+    // 4.0: reserved for future focus/active tracking
+    #[allow(dead_code)]
     active: bool,
+    #[allow(dead_code)]
     focused: bool,
     #[allow(dead_code)]
     rng: LcgRng,
@@ -96,10 +99,11 @@ impl PulledBlocks {
         self
     }
 
-    pub fn update(&mut self, dt: f32, _cols: usize, _rows: usize) {
+    pub fn update(&mut self, dt: std::time::Duration, _cols: usize, _rows: usize) {
         if !self.active {
             return;
         }
+        let dt = dt.as_secs_f32();
         let m = self.speed.multiplier();
         for p in &mut self.particles {
             for gc in &self.gravity_centers {
@@ -144,29 +148,14 @@ impl PulledBlocks {
     }
 }
 
-impl crate::interface::tui::screensaver::ScreensaverState for PulledBlocks {
-    fn active(&self) -> bool {
-        self.active
-    }
-    fn set_active(&mut self, active: bool) {
-        self.active = active;
-    }
-    fn focused(&self) -> bool {
-        self.focused
-    }
-    fn set_focused(&mut self, focused: bool) {
-        self.focused = focused;
-    }
-}
-
-impl crate::interface::tui::screensaver::ScreensaverEffect for PulledBlocks {
+impl crate::interface::tui::screensaver::Screensaver for PulledBlocks {
     fn init(&mut self, cols: usize, rows: usize) {
         *self = Self::new(cols, rows);
     }
-    fn update(&mut self, dt: f32, cols: usize, rows: usize) {
+    fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
         self.update(dt, cols, rows);
     }
-    fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
+    fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
         if self.active {
             PulledBlocks::draw(self, grid, cols, rows);
         }

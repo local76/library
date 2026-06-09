@@ -5,6 +5,7 @@
 //!
 //! Classification: Interface (TUI) + Role (Application).
 
+use std::cell::RefCell;
 use crate::core::{LcgRng, TerminalCell};
 use super::dimensions::{Density, Direction, Palette, Speed, Style, resolve_color};
 use super::RainDrop;
@@ -25,12 +26,21 @@ pub struct FallingGlyphs {
     /// Particle density.
     pub density_setting: Density,
     /// First-class active flag for focus/tab UIs.
+    // 4.0: `active`/`focused` are reserved fields, currently inert
+    // (ScreensaverState is a supertrait with default-true impls). They
+    // are kept in the struct for future focus/active tracking without
+    // a breaking 4.x schema change.
+    #[allow(dead_code)]
     active: bool,
+    #[allow(dead_code)]
     focused: bool,
     rng: LcgRng,
-    last_drawn: Vec<usize>,
-    last_cols: usize,
-    last_rows: usize,
+    // Cached state mutated inside `draw`. Wrapped in RefCell so `draw` can
+    // remain `&self` (the 4.0 unified ScreensaverEffect trait requirement,
+    // shared with rIdle-scenes GDI renderers).
+    last_drawn: RefCell<Vec<usize>>,
+    last_cols: RefCell<usize>,
+    last_rows: RefCell<usize>,
 }
 
 impl FallingGlyphs {
@@ -63,9 +73,9 @@ impl FallingGlyphs {
             active: true,
             focused: true,
             rng,
-            last_drawn: Vec::new(),
-            last_cols: cols,
-            last_rows: rows,
+            last_drawn: RefCell::new(Vec::new()),
+            last_cols: RefCell::new(cols),
+            last_rows: RefCell::new(rows),
         }
     }
 
@@ -99,10 +109,11 @@ impl FallingGlyphs {
         self
     }
 
-    pub fn update(&mut self, dt: f32, cols: usize, rows: usize) {
+    pub fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
         if !self.active {
             return;
         }
+        let dt = dt.as_secs_f32();
         let m = self.speed.multiplier();
         let (sx, sy) = self.direction.signs();
         for drop in &mut self.drops {
@@ -117,23 +128,27 @@ impl FallingGlyphs {
     }
 
     /// Render the falling glyphs into the provided grid.
-    pub fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
+    pub fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
         if !self.active {
             return;
         }
 
-        if cols != self.last_cols || rows != self.last_rows {
-            self.last_drawn.clear();
-            self.last_cols = cols;
-            self.last_rows = rows;
+        {
+            let last_cols = *self.last_cols.borrow();
+            let last_rows = *self.last_rows.borrow();
+            if cols != last_cols || rows != last_rows {
+                self.last_drawn.borrow_mut().clear();
+                *self.last_cols.borrow_mut() = cols;
+                *self.last_rows.borrow_mut() = rows;
+            }
         }
 
-        for &idx in &self.last_drawn {
+        for &idx in self.last_drawn.borrow().iter() {
             if idx < grid.len() {
                 grid[idx] = TerminalCell::default();
             }
         }
-        self.last_drawn.clear();
+        self.last_drawn.borrow_mut().clear();
 
         for drop in &self.drops {
             for i in 0..drop.length {
@@ -168,7 +183,7 @@ impl FallingGlyphs {
                                 bg: (0, 0, 0),
                                 bold: i < 3,
                             };
-                            self.last_drawn.push(idx);
+                            self.last_drawn.borrow_mut().push(idx);
                         }
                     }
                 }
@@ -177,29 +192,14 @@ impl FallingGlyphs {
     }
 }
 
-impl crate::interface::tui::screensaver::ScreensaverState for FallingGlyphs {
-    fn active(&self) -> bool {
-        self.active
-    }
-    fn set_active(&mut self, active: bool) {
-        self.active = active;
-    }
-    fn focused(&self) -> bool {
-        self.focused
-    }
-    fn set_focused(&mut self, focused: bool) {
-        self.focused = focused;
-    }
-}
-
-impl crate::interface::tui::screensaver::ScreensaverEffect for FallingGlyphs {
+impl crate::interface::tui::screensaver::Screensaver for FallingGlyphs {
     fn init(&mut self, cols: usize, rows: usize) {
         *self = Self::new(cols, rows, self.density);
     }
-    fn update(&mut self, dt: f32, cols: usize, rows: usize) {
+    fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
         self.update(dt, cols, rows);
     }
-    fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
+    fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
         FallingGlyphs::draw(self, grid, cols, rows);
     }
 }

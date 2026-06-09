@@ -51,11 +51,26 @@ fn get_log_app_name() -> &'static str {
 /// Path: `%APPDATA%\<app_name>\log.txt` where `<app_name>` is set via [`set_log_app_name`].
 /// Default folder name (before `set_log_app_name` is called) is `"rTmp"`.
 pub fn get_appdata_log_path() -> Option<PathBuf> {
-    std::env::var("APPDATA").ok().map(|appdata| {
-        std::path::PathBuf::from(appdata)
-            .join(get_log_app_name())
-            .join("log.txt")
-    })
+    #[cfg(windows)]
+    {
+        std::env::var("APPDATA").ok().map(|appdata| {
+            std::path::PathBuf::from(appdata)
+                .join(get_log_app_name())
+                .join("log.txt")
+        })
+    }
+    #[cfg(not(windows))]
+    {
+        let base = std::env::var("XDG_DATA_HOME")
+            .ok()
+            .map(PathBuf::from)
+            .or_else(|| {
+                std::env::var("HOME").ok().map(|home| {
+                    PathBuf::from(home).join(".local").join("share")
+                })
+            });
+        base.map(|b| b.join(get_log_app_name()).join("log.txt"))
+    }
 }
 
 fn get_log_file() -> &'static Mutex<Option<File>> {

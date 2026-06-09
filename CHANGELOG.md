@@ -5,6 +5,221 @@ All notable changes to rCommon will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Release process (for maintainers)
+
+```bash
+# 1. From the rcommon repo root, stage and commit the 4.0 changes
+cd ../rCommon
+git add -A
+git commit -m "rCommon 4.0.0: unified design system + backend-agnostic Screensaver
+
+- Add rcommon::interface::tui::design (single import path for r* TUI apps)
+- Move Screensaver trait to rcommon::core (backend-agnostic, unified on Duration)
+- Add rcommon::role::application::palette::ScreenPalette
+- Bridge ScreenPalette to dimensions::Palette (AccentDim/Hot/Cool variants)
+- Add rcommon::core::screensaver::ScreensaverState supertrait
+- Move chrome files into design/ subfolder (deprecated re-exports for 4.0.x)
+- 130 tests pass (96 unit + 11 design facade + 2 taxonomy + 21 doctests)"
+
+# 2. Tag the release
+git tag -a v4.0.0 -m "rCommon 4.0.0 — Unified design system for the rApps suite"
+git push origin main --follow-tags
+
+# 3. (Optional) Update each r* app to require rcommon = \"4.0\" (instead of branch = \"main\")
+#    so consumers outside the local [patch] tree get the stable release.
+```
+
+After tagging, all r* apps that use `[patch."https://github.com/local76/rCommon.git"]`
+will resolve to the 4.0.0 release once the local rcommon directory is removed
+or the patch entries are commented out.
+
+## [4.1.9] - 2026-06-08
+
+### Added
+- **`rcommon::role::application::scenes::unstable`**: rUnstable (a 4-phase molecular-oscillation screensaver: Assembled → Vibrating → Disassembling → Exploding, with phase transitions driven by accumulated particle instability) is the **tenth and final** effect migrated into rcommon. Public type: `rcommon::role::application::scenes::unstable::Unstable`. Source: `rcommon/src/role/application/scenes/unstable/{effect.rs, drawing.rs, update_core.rs, types.rs}` — 4 source files. **This completes the rcommon 4.1.x "all 10 r* effects consolidated into rcommon" milestone.**
+- **`tests/scenes_facade.rs`**: 4 new rUnstable tests (80x24, 60x40, 200x60, zero-size). **42 total scene tests**, one per effect (matrix, beams, bhop, fire, fireflies, fireworks, life, party, pour, unstable) × 4 sizes (80x24, 60x40, 200x60, zero-size) + 2 matrix-specific tests (resize-between-updates, has_scanlines for bhop).
+
+### Changed (non-breaking)
+- **rUnstable canonical impl differences**: (a) The pre-4.1 rUnstable read `HKEY_CURRENT_USER\Software\Windows-Screensavers\rUnstable\ParticleLimit`/`ExplosionFreq` registry values. The 4.1.9 inline migration collapses these to defaults (1, 1). (b) `ridle_core::current_palette()` → `query_current_palette()`. (c) `ridle_core::rcommon::rgb::RgbColor` → `crate::role::application::rgb::protocol::RgbColor`. (d) `crate::types` / `crate::effect` / `crate::drawing` sibling imports converted to `super::*`. (e) `ridle_core::logo_lines()` replaced with `rcommon::interface::tui::effects::render_logo_block(get_system_info().logo_text, None)`.
+- **`render_logo_block` moved to `rcommon::core::logo_block`**: The 5x5 block-letter logo renderer is a pure string-transformer with a static cache — fits in `core` (no `interface` / `role` dependencies). Moved so both the r* TUI effects (interface layer) and the r* screensaver effects (role layer) can import it without violating the 4-layer taxonomy (role is not allowed to import from interface). The pre-4.1.9 `rcommon::interface::tui::effects::render_logo_block` path is preserved as a deprecated re-export for back-compat with any r* TUI app that imports from the 4.0 path.
+
+### rcommon 4.1.x milestone summary
+
+The 4.1.0 → 4.1.9 patch series **migrated all 10 r* effect crates from `rScenes/` into rcommon** at `rcommon::role::application::scenes::*`. The pre-4.1 build layout was 10 separate r* crates each with their own `ridle-core` dependency; the post-4.1 build layout is a single rcommon with the 10 effects as feature-gated submodules, and the r* crates in rScenes/ are slated to become thin shim binaries in rcommon 4.2 (which will also move the screensaver_runtime into rcommon so the 10 rScenes/* binaries become 10-line `rcommon::screensaver_runtime::run_main` calls).
+
+Migration per effect, in dependency complexity order:
+- **4.1.0** rMatrix (1 file, simplest)
+- **4.1.1** rBeams (3 files)
+- **4.1.2** rBhop (3 files, Windows-only DPI/cell sizing collapsed to 12x20)
+- **4.1.3** rFire (4 files)
+- **4.1.4** rFireflies (4 files)
+- **4.1.5** rFireworks (4 files)
+- **4.1.6** rLife (8 files, biggest non-audio effect)
+- **4.1.7** rParty (5 files, includes the audio WASAPI loopback stub)
+- **4.1.8** rPour (7 files)
+- **4.1.9** rUnstable (4 files, completes the set)
+
+All 10 effects share the same migration pattern: `ridle_core::Screensaver` → `crate::core::screensaver::Screensaver`, `ridle_core::current_palette()` → `query_current_palette()`, `ridle_core::rcommon::rgb::*` → `crate::role::application::rgb::*`, `ridle_core::get_system_info()` → `crate::platform::native::sys_info::get_system_info()`, `ridle_core::logo_lines()`/`logo_dimensions()` → `crate::interface::tui::effects::render_logo_block`, `HKEY_CURRENT_USER` registry reads → defaults. The deprecated `ridle_core::*` indirection layer is fully removed in 4.1.9; in 4.2 the `rIdle-scenes/ridle-core` crate itself can be deleted (its only remaining purpose is the screensaver_runtime, which 4.2 moves into rcommon too).
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 42 scenes_facade + 2 taxonomy + 22 doctests = **173 tests pass**.
+- `cargo test --test taxonomy_compliance`: All 147 source files audited against the 4-layer taxonomy rules. Zero cross-layer violations.
+
+## [4.1.8] - 2026-06-08
+
+### Added
+- **`rcommon::role::application::scenes::pour`**: rPour (the rain effect with puddle accumulation, flying birds, ambient lightning, and the same kind of logo-character-reveal seen in rLife) is the ninth effect migrated. Public type: `rcommon::role::application::scenes::pour::Pour`. Source: `rcommon/src/role/application/scenes/pour/{effect.rs, drawing.rs, update_core.rs, update_bird.rs, update_scenery_and_animals.rs, update_lightning.rs, types.rs}` — 7 source files.
+- **`tests/scenes_facade.rs`**: 4 new rPour tests (80x24, 60x40, 200x60, zero-size). 38 total scene tests.
+
+### Changed (non-breaking)
+- **rPour canonical impl differences**: (a) The pre-4.1 rPour read `HKEY_CURRENT_USER\Software\Windows-Screensavers\rPour\DropCount`/`AssembleSpeed` registry values. The 4.1.8 inline migration collapses these to defaults (1, 1). (b) `ridle_core::current_palette()` → `query_current_palette()`. (c) `ridle_core::rcommon::rgb::*` → `crate::role::application::rgb::*`. (d) `crate::types` / `crate::effect` / `crate::drawing` sibling imports converted to `super::*` for the new rcommon module layout. (e) The drop-reset branch in `update_core.rs:189` had `cols - 1` which underflowed at 0-cols grids; guarded with `&& cols > 0`.
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 38 scenes_facade + 2 taxonomy + 22 doctests = **169 tests pass**.
+
+## [4.1.7] - 2026-06-08
+
+### Added
+- **`rcommon::role::application::scenes::party`**: rParty (confetti + disco ball + bouncing-equalizer audio visualizer + neon stars) is the eighth effect migrated. Public type: `rcommon::role::application::scenes::party::Party`. Source: `rcommon/src/role/application/scenes/party/{effect.rs, drawing.rs, audio.rs, types.rs}`.
+- **`tests/scenes_facade.rs`**: 4 new rParty tests (80x24, 60x40, 200x60, zero-size). 34 total scene tests.
+- **rcommon `[target.'cfg(windows)'.dependencies] windows` features**: Added `Win32_Media` and `Win32_Media_Audio` to the `windows` crate feature list so the rParty audio module compiles. rcommon has a hard dep on the `windows` crate (gated by the `lifecycle-background`, `notification`, and other Windows-only features); enabling these audio features makes rParty self-contained.
+
+### Changed (non-breaking)
+- **rParty canonical impl differences**: (a) The pre-4.1 rParty read `HKEY_CURRENT_USER\Software\Windows-Screensavers\rParty\ConfettiDensity`/`DiscoBall` registry values. The 4.1.7 inline migration collapses these to defaults (1, 1). (b) The Windows-only `IAudioClient` loopback capture routine (`unsafe fn run_audio_capture`, ~110 lines) used the `windows` crate v0.52 API in a way that the v0.52 method signatures (`device.Activate` taking a single arg, `CoCreateInstance` taking three args) have shifted since the original rParty was written. Rather than carry a half-working `unsafe` block into rcommon, the 4.1.7 inline migration uses the same sine+noise fallback generator the non-Windows path uses on Windows too — the visualizer still produces a beat pattern, just not the real WASAPI loopback one. The full WASAPI capture returns in 4.2 once verified end-to-end against the live rParty screensaver preview.
+- **rParty logo**: `ridle_core::logo_lines()` + `logo_dimensions()` (Windows file read) replaced with `rcommon::interface::tui::effects::render_logo_block(get_system_info().logo_text, None)`. The disco-ball draw routine got a `cols == 0 || rows == 0` early-return guard to prevent the zero-size-grid panic.
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 34 scenes_facade + 2 taxonomy + 22 doctests = **165 tests pass**.
+
+## [4.1.6] - 2026-06-08
+
+### Added
+- **`rcommon::role::application::scenes::life`**: rLife (a 4-state universe simulation: BigBang → Expansion → Accretion → Singularity → Collapse, with gravity wells, nebular ignition, logo-character accretion, and a particle system) is the seventh effect migrated. Public type: `rcommon::role::application::scenes::life::LifeEffect`. Source: `rcommon/src/role/application/scenes/life/{effect.rs, drawing.rs, draw_particles.rs, update_core.rs, update_expansion.rs, update_collapse.rs, update_accretion_helpers.rs, types.rs}` — 8 source files (the r* effect with the most sub-files after rPour).
+- **`tests/scenes_facade.rs`**: 4 new rLife tests (80x24, 60x40, 200x60, zero-size). 30 total scene tests.
+
+### Changed (non-breaking)
+- **rLife canonical impl differences**: The pre-4.1 rLife read `HKEY_CURRENT_USER\Software\Windows-Screensavers\rLife\SeedDensity`/`SimSpeed` registry values. The 4.1.6 inline migration collapses these to defaults (3, 1). Re-added in 4.2.
+- **rLife logo overlay**: `ridle_core::logo_lines()` + `logo_dimensions()` (Windows file read) replaced with `rcommon::interface::tui::effects::render_logo_block(get_system_info().logo_text, None)`.
+- **rLife internal paths**: All `crate::types` / `crate::effect` / `crate::drawing` / `crate::update_*` sibling imports converted to `super::*` for the new rcommon module layout. The `crate::update_expansion::update_*` / `crate::update_collapse::update_*` call sites in `update_core.rs` are now `update_expansion::update_*` / `update_collapse::update_*` (resolved via `use super::{update_expansion, update_collapse}`).
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 30 scenes_facade + 2 taxonomy + 22 doctests = **161 tests pass**.
+
+## [4.1.5] - 2026-06-08
+
+### Added
+- **`rcommon::role::application::scenes::fireworks`**: rFireworks (rocket + explosion particle effects with colored bursts, trails, and a city skyline silhouette) is the sixth effect migrated. Public type: `rcommon::role::application::scenes::fireworks::Fireworks`. Source: `rcommon/src/role/application/scenes/fireworks/{effect.rs, drawing.rs, types.rs}`.
+- **`tests/scenes_facade.rs`**: 4 new rFireworks tests (80x24, 60x40, 200x60, zero-size). 26 total scene tests.
+
+### Changed (non-breaking)
+- **rFireworks canonical impl differences**: The pre-4.1 rFireworks read `HKEY_CURRENT_USER\Software\Windows-Screensavers\rFireworks\LaunchRate`/`SkylineStyle` registry values. The 4.1.5 inline migration collapses these to defaults (1, 0). Re-added in 4.2.
+- **rFireworks logo**: `ridle_core::logo_lines()` + `logo_dimensions()` replaced with `rcommon::interface::tui::effects::render_logo_block(get_system_info().logo_text, None)`. The `logo_y = ... / 2 - 3` was fixed to `saturating_sub` to avoid the 0-row underflow that broke the zero-size smoke test.
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 26 scenes_facade + 2 taxonomy + 22 doctests = **157 tests pass**.
+
+## [4.1.4] - 2026-06-08
+
+### Added
+- **`rcommon::role::application::scenes::fireflies`**: rFireflies (boids-like fireflies with attractors, trails, and a glow-excited centered logo) is the fifth effect migrated. Public type: `rcommon::role::application::scenes::fireflies::Fireflies`. Source: `rcommon/src/role/application/scenes/fireflies/{effect.rs, drawing.rs, types.rs}`.
+- **`tests/scenes_facade.rs`**: 4 new rFireflies tests (80x24, 60x40, 200x60, zero-size). 22 total scene tests.
+
+### Changed (non-breaking)
+- **rFireflies logo**: The pre-4.1 `ridle_core::logo_lines()` + `logo_dimensions()` (Windows file read) replaced with `rcommon::interface::tui::effects::render_logo_block(get_system_info().logo_text, None)`. The `logo_excitation` buffer (used for the glow effect under each logo character) is now sized to a fixed 80x12 — matches the typical 80x12 logo block rendered by `render_logo_block` for the 4-letter OS tokens (e.g. "WIN11", "ARCH"). Logo glow now follows the centered position correctly.
+- **rFireflies palette + RGB**: All `ridle_core::current_palette()` → `crate::role::application::palette::query_current_palette()`. All `ridle_core::rcommon::rgb::*` → `crate::role::application::rgb::*`. All `ridle_core::{hsl_to_rgb, rgb_to_hsl}` → `crate::core::{hsl_to_rgb, rgb_to_hsl}`. No behavior change.
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 22 scenes_facade + 2 taxonomy + 22 doctests = **153 tests pass**.
+
+## [4.1.3] - 2026-06-08
+
+### Added
+- **`rcommon::role::application::scenes::fire`**: rFire (Doom-style cellular-automata fire ramp + sparks + volcanic globs + starfield) is the fourth effect migrated. Public type: `rcommon::role::application::scenes::fire::FireEffect`. Source: `rcommon/src/role/application/scenes/fire/{effect.rs, drawing.rs, types.rs}`.
+- **`tests/scenes_facade.rs`**: 4 new rFire tests (80x24, 60x40, 200x60, zero-size). 18 total scene tests.
+
+### Changed (non-breaking)
+- **rFire canonical impl differences**: The pre-4.1 rFire read `HKEY_CURRENT_USER\Software\Windows-Screensavers\rFire\FlameHeight`/`SparkCount` registry values. The 4.1.3 inline migration collapses these to defaults (both = 1, i.e. medium). Re-added in 4.2.
+- **rFire logo overlay**: Was `ridle_core::logo_lines()` + `logo_dimensions()` (a static Windows file). 4.1.3 uses `rcommon::interface::tui::effects::render_logo_block` with `get_system_info().logo_text`.
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 18 scenes_facade + 2 taxonomy + 22 doctests = **149 tests pass**.
+
+## [4.1.2] - 2026-06-08
+
+### Added
+- **`rcommon::role::application::scenes::bhop`**: rBhop (TUI dashboard + fake command console + autonomous bhop simulator) is the third effect migrated. Public type: `rcommon::role::application::scenes::bhop::BhopDashboard`. Implements the unified `Screensaver` trait + returns `has_scanlines() = true` for CRT overlay. Source: `rcommon/src/role/application/scenes/bhop/{animation.rs, drawing.rs, types.rs}`.
+- **`lifecycle::foreground::identity::shell_name()`** + **`refresh_rate_hz()`**: New cross-platform helpers. `shell_name()` returns PowerShell v7.4 (Windows if `$PSModulePath` is set), cmd.exe (Windows fallback), or `$SHELL` env var (POSIX, default `/bin/bash`). `refresh_rate_hz()` queries the device caps on Windows, returns 60 on other platforms. rBhop dashboard uses both; other r* apps can use them too.
+
+### Changed (non-breaking)
+- **rBhop canonical impl differences**: The pre-4.1 rBhop had several Windows-only behaviors that the 4.1.2 inline migration collapses to defaults. (a) DPI-aware cell sizing via `GetDC`/`GetDeviceCaps(LOGPIXELSX)` → fixed 12x20 cells (the dpi-aware sizing returns in 4.2). (b) Keyboard input via `GetAsyncKeyState(VK_SPACE)` for jump → dropped, autonomous AI-only (returns in 4.2 with screensaver_runtime's native input layer). (c) `HKEY_CURRENT_USER\Software\Windows-Screensavers\rBhop\Speed`/`ShowSysInfo` registry reads → defaults (Speed=1, ShowSysInfo=true). (d) `cols - 77` underflow on grids < 77 wide → `cols.saturating_sub(77)`. Visual output is identical at 80x24 (the canonical screensaver preview size).
+- **Theme mode label**: Was `ridle_core::get_theme_mode()` (Windows-only). 4.1.2 derives the label from `rcommon::platform::native::sys_info::query_system_theme().is_dark_mode` (cross-platform, cached).
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 14 scenes_facade + 2 taxonomy + 22 doctests = **145 tests pass**.
+
+## [4.1.1] - 2026-06-08
+
+### Added
+- **`rcommon::role::application::scenes::beams`**: rBeams (cinematic volumetric spotlights + twinkling stars + dust particles) is the second effect migrated into rcommon. Public type: `rcommon::role::application::scenes::beams::Beams`. Implements the unified `rcommon::core::screensaver::Screensaver` trait. Source: `rcommon/src/role/application/scenes/beams/{effect.rs, types.rs}`. `default_spotlights()`, `Spotlight`, `Star`, `DustParticle` are all re-exported for downstream consumers.
+- **`tests/scenes_facade.rs`**: 4 new rBeams tests (80x24, 60x40, 200x60, zero-size). 9 total scene tests, all green.
+
+### Changed (non-breaking)
+- **rBeams canonical impl differences**: The pre-4.1 rBeams read `HKEY_CURRENT_USER\Software\Windows-Screensavers\rBeams\BeamCount` and `TwinkleStars` registry values. The 4.1.1 inline migration collapses these to defaults (4 beams, twinkle on) since rcommon has no settings module yet. The full registry round-trip will be re-added in 4.2 alongside the screensaver_runtime move. Visual output is identical at default settings.
+- **rBeams logo overlay**: Was rendered from `ridle_core::logo_lines()` (a static Windows-only file). 4.1.1 uses `rcommon::interface::tui::effects::render_logo_block` with the live system `logo_text` (e.g. "WIN11", "ARCH", "FEDORA"), so the centered overlay now matches the host OS.
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 9 scenes_facade + 2 taxonomy + 22 doctests = **140 tests pass**.
+
+## [4.1.0] - 2026-06-08
+
+### Added
+- **`role::application::scenes` façade**: The 10 r* screensaver effects (rLife, rMatrix, rFire, rBhop, rBeams, rPour, rUnstable, rParty, rFireworks, rFireflies) are migrating into rcommon at `rcommon::role::application::scenes::<name>::<EffectType>`. 4.1.0 ships the module structure with **rMatrix** as the canonical reference impl; the other 9 land as 4.1.x patch releases. r* effect crates and r* apps can import via `use rcommon::role::application::scenes::matrix::Matrix;` and the existing `Screensaver` trait from `rcommon::core::screensaver`.
+- **`scenes` feature**: A new opt-in `scenes` feature (default-on) controls whether the `scenes` module is compiled. r* apps that don't need the effects can opt out with `default-features = false`. The feature is **empty** (no extra deps) — it just gates the module declarations so the additional `rcommon` compile cost is incurred only by consumers that pull it in.
+- **`tests/scenes_facade.rs`**: 5 smoke tests (rMatrix: 80x24, 60x40, 200x60, resize-between-updates, zero-size grid) lock in the public API and resize safety. Will grow to 10 tests × 5 sizes as the other 9 effects land in 4.1.x.
+
+### Changed (non-breaking)
+- **rMatrix canonical impl**: The pre-4.1 rMatrix effect source lives in rcommon at `src/role/application/scenes/matrix/effect.rs`. Implementation differences from the rScenes/rMatrix 0.1.x version: pulls accent from `rcommon::role::application::palette::query_current_palette()` (no more `ridle_core::current_palette()` indirection), uses `rcommon::role::application::rgb::RgbController` directly, drops the `HKEY_CURRENT_USER` density/katakana registry reads (defaults to density=1, full pool). Visual output is identical to the prior rScenes/rMatrix at default settings.
+
+### Verified
+- `cargo test` (debug) on rcommon: 96 unit + 11 design_facade + 2 taxonomy + 5 scenes_facade = **114 tests pass**.
+- `cargo check` on rcommon with `--no-default-features`: compiles cleanly (the `scenes` feature correctly gates the module).
+
+## [4.0.0] - 2026-06-08
+
+### Added
+- **Unified Design System**: New `rcommon::interface::tui::design` façade + `design::prelude` is the single import path for r* TUI apps (rFetch, rMonitor, rIdle, rTemplate, rWifi, hub). Brings in theme, accent bundles, status bar, toast, markdown viewer, layout guard, title banner, effect preview, mouse selection, layout helpers, text utilities, terminal-size constants, all 12 canonical TUI effects, and the unified `Screensaver` trait. See `docs/DESIGN_SYSTEM.md` for the full onboarding guide.
+- **`ScreenPalette`**: New backend-agnostic RGB-tuple palette in `rcommon::role::application::palette` with `bg`/`fg`/`accent`/`dim`/`hot`/`cool`/`mid`/`peak` fields. `from_system(accent, is_dark)` is the canonical 4.0 constructor; `query_current_palette()` is the cross-platform helper. r* TUI apps and r* GDI screensaver apps now share the same color story.
+- **`dimensions::Palette` AccentTriad**: New `AccentDim`, `AccentHot`, `AccentCool` variants that map 1:1 to `ScreenPalette`'s `dim`/`hot`/`cool` channels. TUI effects can now use the system accent's natural triadic scheme without hand-rolled HSL math.
+- **`Screensaver::has_scanlines`**: New default-`false` hook on the unified `Screensaver` trait. rIdle-scenes GDI effects opt in to `true` for CRT overlay.
+- **`Screensaver: ScreensaverState` supertrait**: Every `Screensaver` automatically implements `ScreensaverState` with default-true / no-op setters. Removes the trait-object friction (`Box<dyn Screensaver + ScreensaverState>` is no longer needed).
+- **Façade tests**: `tests/design_facade.rs` (11 tests) locks in the 4.0 public surface at 80x24, 106x30, and 200x60 terminal sizes.
+- **3.x back-compat shims**: The pre-4.0 module paths (`rcommon::interface::tui::theme`, `rcommon::interface::tui::markdown`, `rcommon::interface::tui::markdown_viewer`, `rcommon::interface::tui::layout`, `rcommon::interface::tui::status`, `rcommon::interface::tui::text`, `rcommon::widgets::colors`, ...) are preserved as deprecated re-exports for one minor release (4.0 → 4.1). The `ScreensaverEffect` trait is re-exported as a deprecated alias for the same window.
+- **ARCHITECTURE.md + docs/DESIGN_SYSTEM.md**: Substantial 4.0 section in ARCHITECTURE.md; new `docs/DESIGN_SYSTEM.md` is the r* app author onboarding guide.
+
+### Changed (breaking)
+- **`Screensaver` trait moved to `core`**: `rcommon::core::screensaver::Screensaver` is the canonical, backend-agnostic trait (no ratatui dependency). The pre-4.0 ratatui-coupled trait in `rcommon::interface::tui::screensaver` now re-exports it; the `ScreensaverRenderer` buffer-management helper stays in `interface::tui` (TUI-layer concern).
+- **`Screensaver::update` takes `Duration`**: Was `f32` seconds in 3.x. `Duration::from_secs_f32(dt)` bridges.
+- **`ScreensaverRenderer::tick_duration`**: The new 4.0 entry point. The pre-4.0 `tick(&mut s, f32)` is a deprecated shim that converts internally.
+- **`Screensaver` is a single trait + supertrait, not a marker**: `init`/`update`/`draw`/`has_scanlines` are declared directly. The `ScreensaverState` sub-trait has default-true / no-op setters; the 12 rcommon TUI effects' manual `ScreensaverState` impls were removed in favor of the blanket.
+- **TerminalCell `pub fn draw(&self, ...)`**: Was `&mut self` in 3.x. The two rcommon effects that mutated internal `last_drawn`/`last_cols`/`last_rows` state inside `draw` now use `RefCell` (a documented internal-cache pattern).
+- **Module split**: Chrome files (`theme`, `colors`, `status`, `toast`, `markdown`, `markdown_viewer`, `layout`, `layout_guard`, `title_banner`, `effect_preview`, `mouse_selection`, `text`) all live under `src/interface/tui/design/` in 4.0. The pre-4.0 top-level paths are deprecated re-exports.
+- **rFetch adoption**: All 11 `rcommon` touchpoints in rFetch now route through `rcommon::interface::tui::design::prelude::*`. The hand-rolled `(show_markdown, markdown_lines, markdown_scroll)` triple in `App` is replaced by `MarkdownViewerState`. `rfetch --stdout` and the rcommon TUI dashboard share the same `ThemeColors`.
+- **rIdle-scenes adoption**: `ridle-core` re-exports the unified `Screensaver` and `TerminalCell` from rcommon (the local duplicates are removed). rFireflies's drawing now consumes `current_palette()` from the rcommon `ScreenPalette` instead of computing its own HSL triadic accent scheme. Other rIdle-scenes effects can migrate incrementally.
+- **rTemplate adoption**: `Box<dyn Screensaver>` (no more `+ ScreensaverState` bound); `tick_duration` instead of deprecated `tick(f32)`.
+- **rFetch version**: 3.0.21 → 3.1.0 (consumes rcommon 4.0; no behavior change).
+- **rTemplate version**: 3.1.0 → 3.2.0 (consumes rcommon 4.0; no behavior change).
+- **rIdle-scenes ridle-core version**: 0.1.4 → 0.1.5 (consumes rcommon 4.0; no behavior change).
+
+### Deprecated
+- `rcommon::interface::tui::screensaver::ScreensaverEffect` (use `rcommon::core::screensaver::Screensaver`).
+- `rcommon::interface::tui::screensaver::ScreensaverRenderer::tick` (use `tick_duration`).
+- All 3.x module paths in `rcommon::interface::tui::*` and `rcommon::widgets::*` (use the `design::` paths).
+
+### Verified
+- `cargo test` (debug + release) on rcommon: 96 unit + 11 design façade + 2 taxonomy + 21 doctests = **130 tests pass**.
+- `cargo check` + `cargo test --release` on rFetch, rTemplate, rIdle-scenes × 10 effects: all green.
+- `cargo build --release` binaries: `rfetch.exe` 1.5 MB, `rpack.exe` 235 KB, `rgb_diagnostic.exe` 142 KB, 10× rIdle-scenes `.exe` 309-352 KB each (all with `opt-level="z"` + LTO + strip).
+
 ## [3.4.4] - 2026-06-08
 
 ### Fixed
