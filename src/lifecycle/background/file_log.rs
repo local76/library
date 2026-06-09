@@ -33,7 +33,7 @@ pub fn is_event_log_enabled() -> bool {
     EVENT_LOG_ENABLED.load(Ordering::Relaxed)
 }
 
-/// Set the per-app log file folder name (e.g. `"helm"`, `"pulse"`, `"scout"`, `"rstart"`).
+/// Set the per-app log file folder name (e.g. `"helm"`, `"pulse"`, `"scout"`, `"ignite"`).
 /// Subsequent calls to `log_message` will write to `%APPDATA%\<app_name>\log.txt`.
 /// Subsequent calls to `get_appdata_log_path` will return the same path.
 ///
