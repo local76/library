@@ -106,6 +106,15 @@ pub use role::application::packages::{
 // Platform native additions (monitors)
 pub use platform::native::monitors::{get_monitors_summary, get_all_monitors};
 
+// rcommon 4.2: the screensaver_runtime module owns the window loop
+// (Win32 GDI on Windows, raw-termios terminal on Linux/macOS), the
+// CLI arg parser (`/s`, `/c`, `/p HWND`), and the public
+// `run_main(saver, name)` entry point. The 10 r* effect binary
+// crates in rScenes/ enable the `screensaver-runtime` feature to
+// get this module; other rcommon consumers don't.
+#[cfg(feature = "screensaver-runtime")]
+pub mod screensaver_runtime;
+
 // Lifecycle foreground additions (advanced console helpers and window)
 pub use lifecycle::foreground::set_tui_panic_hook;
 

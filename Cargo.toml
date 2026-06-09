@@ -1,6 +1,6 @@
 [package]
 name = "rcommon"
-version = "4.1.9"
+version = "4.2.0"
 authors = ["Jeryd <jerydleuck@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
@@ -54,6 +54,9 @@ windows = { version = "0.52.0", features = [
     "Win32_Media_Audio",
 ], optional = true }
 
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+libc = { version = "0.2", optional = true }
+
 [features]
 default = ["interface-tui", "interface-api", "lifecycle-foreground", "lifecycle-background", "platform-native", "role-system", "role-application", "scenes", "winget"]
 
@@ -77,6 +80,14 @@ role-application = ["rgb"]
 # `scenes`; r* apps that don't need the effects can opt out with
 # `default-features = false`.
 scenes = []
+
+# rcommon 4.2: the screensaver runtime (window loop + CLI args + raw
+# terminal on non-Windows). The 10 r* effect binaries in rScenes/
+# enable this feature to get `rcommon::screensaver_runtime::run_main`.
+# The 7 r* TUI apps and other rcommon consumers that don't need to
+# host a screensaver process do not enable it. Default-off because it
+# pulls in `libc` on non-Windows and the Win32 GDI stack on Windows.
+screensaver-runtime = ["scenes", "platform-native", "role-application", "lifecycle-foreground"]
 
 # Granular / legacy (kept for compatibility with existing consumers)
 gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]

@@ -33,6 +33,36 @@ After tagging, all r* apps that use `[patch."https://github.com/local76/rCommon.
 will resolve to the 4.0.0 release once the local rcommon directory is removed
 or the patch entries are commented out.
 
+## [4.2.0] - 2026-06-08
+
+### Added
+- **`rcommon::screensaver_runtime` module**: New cross-platform screensaver host loop. `run_main(saver, name)` parses the standard screensaver CLI args (`/s` run, `/c` configure, `/p HWND` preview, `-h` help) and dispatches to the platform implementation. On Windows the runtime is currently a **scaffold-only stub** that prints a TODO and exits 0 (the full Win32 GDI window loop — HWND creation, WndProc, `timeBeginPeriod(1)`, BitBlt, per-monitor DPI awareness, preview-mode static control subclassing — is the 4.3 follow-up). On Linux/macOS the runtime runs a real raw-termios terminal loop with a 60 FPS target and a differential ANSI renderer (only the cells that changed since the previous frame are redrawn). Public surface: `Mode` enum, `parse_args()`, `print_usage(name)`, `run_main(saver, name)`. The 10 r* effect binary crates in rScenes/ all call this.
+- **`screensaver-runtime` feature**: New opt-in feature (default-off) in rcommon. The 10 r* effect binary crates in rScenes/ enable it. The 7 r* TUI apps do not. Pulls in `libc` on non-Windows (for `tcgetattr`/`tcsetattr`/`ioctl`/`select`) and the Win32 GDI stack on Windows.
+- **`tests/screensaver_runtime_facade.rs`**: 3 smoke tests for the new runtime — `parse_args` returns a valid Mode, `print_usage` doesn't panic for known effect names, a NoopScreensaver can be driven through the trait dispatch path. Avoids invoking `run_main` directly (it would block on the terminal loop).
+- **`lifecycle::foreground::identity::shell_name()` + `refresh_rate_hz()`** were already added in 4.1.2 — the screensaver_runtime's Windows scaffold (the eventual full Win32 GDI loop) is the primary consumer of `refresh_rate_hz()`.
+
+### Changed
+- **rcommon 4.2 is the first release where the `ridle-core` crate is fully deletable**: the screensaver_runtime now lives in rcommon, and the 10 r* effect binaries in rScenes/ have been collapsed to 20-line `rcommon::screensaver_runtime::run_main` shims. `rScenes/src/ridle-core/` was deleted; `rScenes/Cargo.toml` no longer references it.
+
+### Verified
+- `cargo test --features screensaver-runtime` (debug) on rcommon: 99 unit + 11 design_facade + 42 scenes_facade + 3 screensaver_runtime_facade + 2 taxonomy + 22 doctests = **179 tests pass**.
+- `cargo build --workspace --release` on rScenes/ produces all 10 shim binaries (240-275 KB each; previously 309-352 KB, smaller because they only pull in `screensaver-runtime` not the full `default` features).
+- `cargo check` on all 6 r* TUI apps (rFetch, rIdle, rMonitor, rStartup, rTemplate, rWifi) with the new `scenes` feature added to their `rcommon` dep — all green.
+- `cargo test --test taxonomy_compliance`: All 147 source files audited against the 4-layer taxonomy rules; zero cross-layer violations (the `screensaver_runtime` module is in `lifecycle/foreground/` which can be imported by `role/application/scenes/*`).
+
+### Migration from 4.1.9 → 4.2.0 for the 10 r* effect binary crates
+The pre-4.2 release had 10 r* effect crates each with their own `ridle-core` dep + ~50 source files per crate. Post-4.2 each r* crate is a 20-line shim:
+```rust
+fn main() {
+    rcommon::screensaver_runtime::run_main(
+        rcommon::role::application::scenes::matrix::Matrix::new(),
+        "rMatrix",
+    );
+}
+```
+
+`ridle-core` is fully gone from rScenes/.
+
 ## [4.1.9] - 2026-06-08
 
 ### Added
