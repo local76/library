@@ -1,11 +1,12 @@
 use std::time::Duration;
 use crate::core::screensaver::Screensaver;
 use crate::core::{LcgRng, TerminalCell};
+use crate::core::logo_block::render_logo_block;
 use crate::platform::native::sys_info::get_system_info;
 use crate::role::application::palette::query_current_palette;
 use crate::role::application::rgb::{RgbController, is_openrgb_enabled};
 use crate::role::application::rgb::protocol::RgbColor;
-use super::types::{LogoCell, Drop, Splash, Phase, BirdState, Animal, SceneryCell};
+use super::types::{LogoCell, Drop, Splash, Phase, BirdState, Animal, AnimalState, AnimalType, SceneryCell};
 pub struct Storm {
     pub(crate) rng: LcgRng,
     pub(crate) logo_cells: Vec<LogoCell>,
@@ -980,6 +981,9 @@ impl Storm {
         }
     }
 
+
+
+}
 
 impl Screensaver for Storm {
     fn update(&mut self, dt: Duration, cols: usize, rows: usize) {

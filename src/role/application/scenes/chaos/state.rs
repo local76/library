@@ -428,6 +428,9 @@ impl Chaos {
     }
 
 
+
+}
+
 impl Screensaver for Chaos {
     fn update(&mut self, dt: Duration, cols: usize, rows: usize) {
         let delta = dt.as_secs_f32();

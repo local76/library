@@ -2,7 +2,6 @@ use crate::core::TerminalCell;
 use crate::role::application::palette::query_current_palette;
 use super::Cosmos;
 use super::types::{UniverseState, to_screen};
-use self::draw_particles::draw_particles_and_trails;
 
 
 
@@ -470,9 +469,6 @@ pub fn draw_life(effect: &Cosmos, grid: &mut [TerminalCell], cols: usize, rows: 
     }
 }
 
-use crate::core::TerminalCell;
-use super::super::state::Cosmos;
-use super::super::types::to_screen;
 
 pub fn draw_particles_and_trails(
     effect: &Cosmos,
