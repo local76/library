@@ -195,3 +195,36 @@ impl Glyphs {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_glyphs_new() {
+        let g = Glyphs::new();
+        assert!(g.drops.is_empty());
+        assert!(!g.char_pool.is_empty());
+    }
+
+    #[test]
+    fn test_glyphs_init() {
+        let mut g = Glyphs::new();
+        g.update(Duration::from_millis(16), 80, 24);
+        assert_eq!(g.last_cols, 80);
+        assert_eq!(g.last_rows, 24);
+        assert!(!g.drops.is_empty());
+    }
+
+    #[test]
+    fn test_glyphs_update_and_draw() {
+        let mut g = Glyphs::new();
+        g.init(80, 24);
+        g.update(Duration::from_millis(16), 80, 24);
+        let mut grid = vec![TerminalCell::default(); 80 * 24];
+        g.draw(&mut grid, 80, 24);
+        // Since digital rain falls over time, checking that cells have non-default contents
+        let drawn_count = grid.iter().filter(|c| c.ch != '\0').count();
+        assert!(drawn_count > 0, "No glyphs drawn in the grid");
+    }
+}

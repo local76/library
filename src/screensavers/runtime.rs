@@ -175,7 +175,35 @@ fn run_preview_stub<S: Screensaver + 'static>(_saver: S) -> isize {
 // ---------------------------------------------------------------------------
 
 #[cfg(not(target_os = "windows"))]
+fn command_exists(cmd: &str) -> bool {
+    std::process::Command::new("sh")
+        .arg("-c")
+        .arg(format!("command -v {} >/dev/null 2>&1", cmd))
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
+#[cfg(not(target_os = "windows"))]
 fn run_fullscreen<S: Screensaver + 'static>(mut saver: S) -> isize {
+    // If running under xscreensaver, embed the terminal window inside the target X11 window.
+    if let Ok(win_id) = std::env::var("XSCREENSAVER_WINDOW") {
+        if std::env::var("TRANCE_EMBEDDED").is_err() {
+            if command_exists("xterm") {
+                let self_exe = std::env::current_exe().unwrap_or_default();
+                let mut cmd = std::process::Command::new("xterm");
+                cmd.args(["-into", &win_id, "-geometry", "120x40", "-e"])
+                    .arg(&self_exe)
+                    .arg("/s")
+                    .env("TRANCE_EMBEDDED", "1");
+                if let Ok(mut child) = cmd.spawn() {
+                    let _ = child.wait();
+                    return 0;
+                }
+            }
+        }
+    }
+
     let _raw_mode = RawTerminalGuard::enable();
     let (mut cols, mut rows) = get_terminal_size();
     // The Screensaver trait's update/draw are the only required

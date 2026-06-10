@@ -2,17 +2,11 @@
 //!
 //! **Taxonomy Classification**: Execution State (Lifecycle - Foreground) + Platform (Native).
 
-#[path = "window_drag_to_move.rs"]
 pub mod drag_to_move;
-#[path = "window_position.rs"]
 pub mod position;
-#[path = "window_relaunch.rs"]
 pub mod relaunch;
-#[path = "window_style.rs"]
 pub mod style;
-#[path = "window_types.rs"]
 pub mod types;
-#[path = "window_visibility.rs"]
 pub mod visibility;
 
 pub use types::{
