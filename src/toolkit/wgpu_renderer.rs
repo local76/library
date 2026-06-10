@@ -73,3 +73,15 @@ impl Default for WgpuRenderer {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_wgpu_renderer_creation() {
+        let renderer = WgpuRenderer::new();
+        assert!(renderer.adapter.is_none());
+        assert!(renderer.device.is_none());
+    }
+}
