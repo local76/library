@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.6.10] - 2026-06-10
+
 ### Changed
-- **Public scene struct names unified**: All 10 scene structs are now named uniformly `<SceneName>` (matching the scene subdirectory). Old metaphorical names removed without deprecation aliases: `BhopDashboard` → `Bounce`, `FireEffect` → `Flame`, `Fireflies` → `Gnats`, `Fireworks` → `Bursts`, `LifeEffect` → `Cosmos`, `Matrix` → `Glyphs`, `Party` → `Disco`, `Pour` → `Storm`, `Unstable` → `Chaos`. `Beams` was already uniform. This is a **breaking API change** for any consumer using the old names; the rename is not gated behind a deprecation alias. The line above in `2026.6.9` that said "the Rust struct names ... are unchanged" was incorrect — the rename actually landed as part of the 4-File Blueprint consolidation.
-- **`tests/scenes_facade.rs` rewritten** to use the new uniform struct names. 42 smoke tests now pass under `cargo test` (previously the file was 100% broken with 9 unresolved-import errors at `cargo test --no-run`).
+- **4.2 Namespace Modernization**: Reorganized public exports to use flat `apps` and `toolkit` modules, deprecating the legacy 4-layer taxonomy modules (`lifecycle`, `platform`, `role`, `interface`).
+- **Public scene struct names unified**: All 10 scene structs are now named uniformly `<SceneName>` (matching the scene subdirectory). Old metaphorical names removed without deprecation aliases: `BhopDashboard` → `Bounce`, `FireEffect` → `Flame`, `Fireflies` → `Gnats`, `Fireworks` → `Bursts`, `LifeEffect` → `Cosmos`, `Matrix` → `Glyphs`, `Party` → `Disco`, `Pour` → `Storm`, `Unstable` → `Chaos`. `Beams` was already uniform.
+- **`tests/scenes_facade.rs` rewritten** to use the new uniform struct names. 42 smoke tests now pass under `cargo test`.
 
 ## [2026.6.9] - 2026-06-09
 

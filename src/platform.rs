@@ -2,6 +2,7 @@
 //! Re-exports from the new backend module.
 
 pub mod native {
+    #[cfg(feature = "reg")]
     pub use crate::toolkit::registry as reg;
     pub use crate::toolkit::monitors;
     #[cfg(feature = "gpu")]
@@ -38,10 +39,10 @@ pub use crate::toolkit::platform::DiskDriveInfo;
 pub use crate::toolkit::platform::NetworkAdapterInfo;
 pub use crate::toolkit::platform::PlatformProvider;
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "sys-info"))]
 pub use crate::toolkit::sys_info::providers::WindowsPlatform as CurrentPlatform;
 
-#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", feature = "sys-info"))]
 pub use crate::toolkit::sys_info::providers::LinuxPlatform as CurrentPlatform;
 
 #[cfg(all(not(any(target_os = "windows", target_os = "linux")), target_arch = "wasm32"))]
@@ -59,4 +60,5 @@ pub use crate::toolkit::platform_embedded::EmbeddedPlatform as CurrentPlatform;
     not(any(target_os = "android", target_os = "ios")),
     not(any(target_os = "none", target_os = "uefi"))
 ))]
+#[cfg(feature = "sys-info")]
 pub use crate::toolkit::sys_info::providers::FallbackPlatform as CurrentPlatform;

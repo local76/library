@@ -95,13 +95,13 @@ pub fn truncate(s: &str, max_len: usize) -> String {
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, feature = "windows-sys"))]
 pub mod win32;
 
 #[cfg(not(windows))]
 pub mod stub;
 
-#[cfg(windows)]
+#[cfg(all(windows, feature = "windows-sys"))]
 pub use win32::*;
 
 #[cfg(not(windows))]

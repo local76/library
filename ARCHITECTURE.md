@@ -1,6 +1,6 @@
 # library — Architecture
 
-> The 4-layer taxonomy, the design system, the Screensaver trait, and the 10 screensaver scenes that form the foundation of every tool in the local76 ecosystem.
+> The 4.2 monorepo layout, the design system, the Screensaver trait, and the 10 screensaver scenes that form the foundation of every tool in the local76 ecosystem.
 
 `library` is the shared Cargo crate that every other local76 tool depends on. This document explains how the code is organized, why it is organized that way, and how to add new code without breaking the contract.
 
@@ -9,56 +9,43 @@
 ## 1. Design principles
 
 - **One crate, one foundation.** No other local76 repo re-implements sysinfo reads, registry helpers, Screensaver trait implementations, or the design-system widgets. If a piece of code will be needed by more than one consumer, it lives in `library`.
-- **Classification by taxonomy.** Code is organized by the 4-layer model in §2. A change in one layer must not silently break a concern in another layer. The `tests/taxonomy_compliance.rs` test enforces this with an AST walker.
+- **Classification by layout.** Code is organized by the 4.2 monorepo layout in §2. A change in one module must not silently break a concern in another module. The `tests/taxonomy_compliance.rs` test enforces this with an AST walker.
 - **Absolute isolation between apps.** Each local76 app must run independently and must not interfere with the others. Three concrete rules:
   - **No global port binding.** No HTTP server on `127.0.0.1:8080`, no shared TCP port, no shared UDP port. Use local IPC: Unix domain sockets on Linux, Named Pipes on Windows.
-  - **Per-app config storage.** Each app's config file lives at `%APPDATA%\<app>\config.yaml` (Windows) or `~/.config/<app>/config.yaml` (Linux). Registry access uses `Software\local76\<app>\*` paths. The app name is the namespace.
+  - **Per-app config storage.** Each app's config file lives at `%APPDATA%\local76\app\<app>\config.yaml` (Windows) or `~/.config/<app>/config.yaml` (Linux). Registry access uses `Software\local76\<app>\*` paths. The app name is the namespace.
   - **Executable-scoped guards.** Single-instance guards and mutex locks are scoped to the executable's name, not the library's. `SingleInstanceGuard` for `helm` does not lock out `pulse`.
 
 ---
 
-## 2. The 4-layer taxonomy
+## 2. The 4.2 monorepo layout
 
 ```
-                ┌─────────────────────────────────────────────────────┐
-                │  core  (the only mandatory layer;  no deps)        │
-                │                                                     │
-                │  • Screensaver trait, TerminalCell,                 │
-                │    ScreenPalette, hsl_to_rgb, render_logo           │
-                └─────────────────────┬───────────────────────────────┘
-                                      │
-       ┌──────────────────────────────┼──────────────────────────────┐
-       │                              │                              │
-       ▼                              ▼                              ▼
-   interface                       lifecycle                     platform
-   (Presentation)                (Execution State)            (Deployment)
-   ─────────────────────         ─────────────────────         ─────────────────────
-   • interface::tui              • lifecycle::foreground       • platform::native
-     (ratatui backend,            (CLI entry, panic, TUI,         (sysinfo, winreg,
-      widgets, effects)            window, drag-to-move,         OpenRGB, WiFi,
-   • interface::cli                single-instance guard)        X11, DWM)
-     (clap, doctor, scaffold)  • lifecycle::background       • platform::embedded
-   • interface::api                (daemon, file_log,             (no-std)
-     (IPC: messages,                service, event_log,         • platform::mobile
-      win32_ipc, unix_ipc)          clipboard, notification)    • platform::web
-   • interface::gui                                                (wasm)
-     (egui helpers)
-                                  role ─┐
-                                         │  (which app is this?)
-                                         ▼
-                                       role
-                                       (Purpose)
-                                       ───────────
-                                       • role::system
-                                         (sys_info, reg, service)
-                                       • role::application
-                                         (palette, rgb, packages,
-                                          10 screensaver scenes)
+                      ┌─────────────────────────────────┐
+                      │   core                          │
+                      │   (neutral foundation, no deps) │
+                      └────────────────┬────────────────┘
+                                       │
+                ┌──────────────────────┴──────────────────────┐
+                ▼                                             ▼
+      ┌───────────────────┐                         ┌───────────────────┐
+      │   ui              │                         │   toolkit         │
+      │   (presentation)  │                         │   (platform APIs) │
+      └─────────┬─────────┘                         └─────────┬─────────┘
+                │                                             │
+                └──────────────────────┬──────────────────────┘
+                                       ▼
+                            ┌───────────────────┐
+                            │   apps            │
+                            │   (lifecycle/run) │
+                            └─────────┬─────────┘
+                                       ▼
+                            ┌───────────────────┐
+                            │   screensavers    │
+                            │   (scenes matrix) │
+                            └───────────────────┘
 ```
 
-**`core` is the only layer that must remain neutral and usable by any combination of the other four.** It cannot depend on `interface`, `lifecycle`, `platform`, or `role`. Everything else can depend on `core` and on each other in any direction.
-
-### Layer responsibilities
+### Module responsibilities
 
 #### 2.1 `core` — neutral foundation
 - `Screensaver` trait (backend-agnostic, depended on by every scene)
@@ -69,25 +56,30 @@
 - `render_logo_block`, `render_logo_5x5`
 - `hsl_to_rgb`, `hsv_to_rgb`
 
-#### 2.2 `interface` — presentation
-- `interface::tui` — Ratatui backend, widgets (AccentGauge, AccentList, AccentTabs), the 10 canonical TUI effects (FallingGlyphs, RisingFlames, etc.), the `design::*` façade.
-- `interface::cli` — clap, `run_doctor`, scaffold helpers.
-- `interface::api` — IPC: messages, win32_ipc, unix_ipc.
-- `interface::gui` — egui helpers (for the `platform::embedded` future).
+#### 2.2 `ui` — presentation
+- Ratatui backend, widgets (AccentGauge, AccentList, AccentTabs, TextBox, AccentScrollbar)
+- The TUI theme management engine and colors
+- Markdown parsing and modal widget viewer
+- Title banner and layout utilities
 
-#### 2.3 `lifecycle` — execution state
-- `lifecycle::foreground` — `BorderlessConsole`, `SingleInstanceGuard`, `ConsoleTitleGuard`, `hide_console_at_startup`, `relaunch_in_conhost`, drag-to-move.
-- `lifecycle::background` — daemon, service, file_log, event_log, clipboard, notification.
+#### 2.3 `toolkit` — platform utilities
+- Low-level native platform FFI for Windows and Linux
+- `sys_info` gathering and device monitoring adapters
+- Windows Registry helpers (`reg.rs`)
+- WLAN / WiFi network hardware scan interfaces
+- Monitor queries and desktop metrics
+- Clipboard operations and system notifications
 
-#### 2.4 `platform` — deployment
-- `platform::native` — Windows + Linux FFI via `#[cfg(target_os = "...")]`. `sys_info`, `reg`, `monitors`, `power`, `dark_mode`, `dwm_accent`, `console_dpi`.
-- `platform::embedded` (future) — no-std, routers, microcontrollers.
-- `platform::mobile` (future) — iOS / Android.
-- `platform::web` (future) — wasm.
+#### 2.4 `apps` — lifecycle & run control
+- Console window state (`BorderlessConsole`, `ConsoleTitleGuard`, `hide_console_at_startup`)
+- Process isolation (`SingleInstanceGuard`) and conhost launcher
+- TUI panic hook setup (`set_tui_panic_hook`)
+- File log writing (`file_log`) and Windows Event logger
+- Background daemon loop runners and service controls
 
-#### 2.5 `role` — purpose
-- `role::system` — Infrastructure: low-level registry, power, services, event logs, disk/BIOS queries.
-- `role::application` — Task-oriented: `palette`, `rgb` (OpenRGB protocol), `packages` (winget), the 10 screensaver scenes, `game` (ObstacleJump).
+#### 2.5 `screensavers` — visual effect scenes
+- Consolidated Rust implementations of the 10 visual screensaver effects (beams, bounce, bursts, chaos, cosmos, disco, flame, glyphs, gnats, storm)
+- These modules are feature-gated and expose a unified interface to be run via `library::screensaver_runtime`
 
 ---
 

@@ -62,11 +62,16 @@ pub use lifecycle::background::daemon;
 #[cfg(feature = "window")]
 pub use lifecycle::foreground::identity;
 
+#[cfg(feature = "sys-info")]
 pub use platform::native::sys_info;
+#[cfg(feature = "reg")]
 pub use platform::native::reg;
 
+#[cfg(feature = "rgb")]
 pub use role::application::rgb;
+#[cfg(feature = "role-application")]
 pub use role::application::game;
+#[cfg(feature = "sys-info")]
 pub use role::application::packages::{
     count_scoop, count_choco, count_npm, count_steam, count_ms_store, count_native, count_winget, count_dpkg, count_pacman,
     count_flatpak, count_snap, count_apk, count_rpm, count_brew, count_emerge, PackageManager, PACKAGE_MANAGERS, get_packages_breakdown
@@ -74,6 +79,7 @@ pub use role::application::packages::{
 
 pub use platform::native::monitors::{get_monitors_summary, get_all_monitors};
 
+#[cfg(feature = "lifecycle-foreground")]
 pub use lifecycle::foreground::set_tui_panic_hook;
 #[cfg(all(feature = "window", feature = "widgets"))]
 pub use lifecycle::foreground::tui_bootstrap::{is_app_shutting_down, set_app_shutting_down};
@@ -99,6 +105,7 @@ pub use lifecycle::foreground::console::{
 
 // Core enhancements
 pub use core::{SystemInfo, hsl_to_rgb, rgb_to_hsl, write_file_atomic};
+#[cfg(feature = "sys-info")]
 pub use platform::native::sys_info::get_system_info;
 
 // GPU compute
@@ -106,6 +113,7 @@ pub use platform::native::sys_info::get_system_info;
 pub use platform::native::gpu::{init_headless_gpu, run_compute_shader};
 
 // Theme
+#[cfg(feature = "sys-info")]
 pub use platform::native::sys_info::{SystemTheme, query_accent_color, query_system_theme};
 
 // Deprecated type aliases

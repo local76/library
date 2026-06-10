@@ -110,17 +110,18 @@ pub trait PlatformProvider {
     fn get_all_monitors() -> Vec<String>;
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "sys-info"))]
 pub use crate::toolkit::sys_info::providers::WindowsPlatform;
 
-#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", feature = "sys-info"))]
 pub use crate::toolkit::sys_info::providers::LinuxPlatform;
 
 #[cfg(all(
     not(any(target_os = "windows", target_os = "linux")),
     not(target_arch = "wasm32"),
     not(any(target_os = "android", target_os = "ios")),
-    not(any(target_os = "none", target_os = "uefi"))
+    not(any(target_os = "none", target_os = "uefi")),
+    feature = "sys-info"
 ))]
 pub use crate::toolkit::sys_info::providers::FallbackPlatform;
 

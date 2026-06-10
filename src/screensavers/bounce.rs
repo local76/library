@@ -7,10 +7,13 @@ use crate::core::{TerminalCell, hsl_to_rgb, rgb_to_hsl};
 use std::time::Duration;
 use crate::core::screensaver::Screensaver;
 use crate::core::logo_block::render_logo_block;
-use crate::lifecycle::foreground::identity;
+#[cfg(feature = "sys-info")]
 use crate::platform::native::sys_info::get_system_info;
+use crate::apps::identity;
 use crate::core::screen_palette::query_current_palette;
+#[cfg(feature = "rgb")]
 use crate::toolkit::rgb_controller::{RgbController, is_openrgb_enabled};
+#[cfg(feature = "rgb")]
 use crate::toolkit::rgb_protocol::RgbColor;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -251,10 +254,18 @@ impl Bounce {
 
         let palette = query_current_palette();
         self.theme_accent = palette.accent;
-        self.theme_mode = if get_system_info_theme_is_dark() { "Dark Mode" } else { "Light Mode" }.to_string();
+        #[cfg(feature = "sys-info")]
+        {
+            self.theme_mode = if get_system_info_theme_is_dark() { "Dark Mode" } else { "Light Mode" }.to_string();
+        }
+        #[cfg(not(feature = "sys-info"))]
+        {
+            self.theme_mode = "Default".to_string();
+        }
     }
 }
 
+#[cfg(feature = "sys-info")]
 fn get_system_info_theme_is_dark() -> bool {
     crate::platform::native::sys_info::query_system_theme().is_dark_mode
 }
