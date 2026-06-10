@@ -1,58 +1,38 @@
-// =====================================================
+﻿// =====================================================
 // library - Shared utility library for the local76 apps ecosystem
-// Organized according to the 4-layer taxonomy:
-//
-// 1. Interface (Presentation Layer)
-//    - CLI, TUI, GUI-Native, GUI-Custom/Game-Engine, Headless/API
-//
-// 2. Execution State (Lifecycle)
-//    - Foreground Applications, Background Processes
-//
-// 3. Platform & Architecture (Deployment)
-//    - Native (Windows/Linux), Web, Mobile, Embedded
-//
-// 4. System Role (Purpose)
-//    - System Software (infrastructure), Application Software (task-oriented)
-//
-// core/ is the only layer that must remain neutral and usable by any combination.
-//
-// This structure prevents accidental coupling between concerns
-// (e.g., a TUI effect type being changed in a way that breaks a background service).
-// =====================================================
-//
-// MIGRATION GUIDE FOR CONSUMERS (Moving off deprecated library::win32):
-// - library::win32::SingleInstanceGuard -> library::lifecycle::foreground::guard::SingleInstanceGuard
-// - library::win32::hide_console_at_startup -> library::lifecycle::foreground::window::hide_console_at_startup
-// - library::win32::query_dark_mode -> library::platform::native::sys_info::query_dark_mode
-// - library::win32::TerminalCell -> library::core::TerminalCell
-// - library::win32::read_string -> library::platform::native::reg::read_string
-// - library::win32::get_packages_breakdown -> library::role::application::packages::get_packages_breakdown
-//
+// Reorganized in 2026.6.9 into a simplified flat folder tree:
+// 1. core/ (neutral foundation)
+// 2. ui/ (widgets & design)
+// 3. backend/ (platform & deployment)
+// 4. app/ (controllers & lifecycle)
+// 5. scenes/ (screensaver effects)
 // =====================================================
 
-
-/// Core neutral primitives (TerminalCell, LcgRng, DashboardInfo, etc.).
-/// Safe to use from CLI, TUI, background services, or future targets.
+// New simplified modules
 pub mod core;
-pub mod error;
+pub mod ui;
+pub mod toolkit;
+pub mod apps;
+pub mod screensavers;
 
-// Build-time helpers (build-script companion — see module docs).
-// Consuming crates call `library::build_resources::prepare_icon(...)` from
-// their own `build.rs`; the actual `embed-resource` invocation lives in
-// the consumer's build script so the library does not need to take a
-// build-dep on `embed-resource`.
-pub mod build_resources;
+// Backward-compatibility shims (re-exporting from the new structure)
+pub mod interface;
+pub mod lifecycle;
+pub mod platform;
+pub mod role;
+pub mod screensaver_runtime;
 
+// Re-export error and main traits
+pub mod error {
+    pub use crate::core::error::*;
+}
 pub use error::{LibraryError, Result as LibraryResult};
 #[cfg(feature = "effects")]
 pub use interface::tui::screensaver::{Screensaver, ScreensaverRenderer};
 
 // =====================================================
-// 1. Interface (Presentation Layer)
+// Backward compatibility re-exports (3.x -> 4.x)
 // =====================================================
-pub mod interface;
-
-// Backward compatibility re-exports (so existing code like `library::widgets` still works)
 #[cfg(feature = "widgets")]
 pub use interface::tui::widgets;
 #[cfg(feature = "effects")]
@@ -66,12 +46,6 @@ pub use interface::tui::screensaver;
 #[allow(deprecated)]
 pub use interface::gui::egui_helpers as gui;
 
-// =====================================================
-// 2. Execution State (Lifecycle)
-// =====================================================
-pub mod lifecycle;
-
-// Backward compat re-exports
 #[cfg(feature = "window")]
 pub use lifecycle::foreground::window;
 #[cfg(feature = "window")]
@@ -88,21 +62,9 @@ pub use lifecycle::background::daemon;
 #[cfg(feature = "window")]
 pub use lifecycle::foreground::identity;
 
-// =====================================================
-// 3. Platform & Architecture (Deployment)
-// =====================================================
-pub mod platform;
-
-// Backward compat
 pub use platform::native::sys_info;
 pub use platform::native::reg;
 
-// =====================================================
-// 4. System Role (Purpose)
-// =====================================================
-pub mod role;
-
-// Backward compat for application role
 pub use role::application::rgb;
 pub use role::application::game;
 pub use role::application::packages::{
@@ -110,19 +72,8 @@ pub use role::application::packages::{
     count_flatpak, count_snap, count_apk, count_rpm, count_brew, count_emerge, PackageManager, PACKAGE_MANAGERS, get_packages_breakdown
 };
 
-// Platform native additions (monitors)
 pub use platform::native::monitors::{get_monitors_summary, get_all_monitors};
 
-// library 4.2: the screensaver_runtime module owns the window loop
-// (Win32 GDI on Windows, raw-termios terminal on Linux/macOS), the
-// CLI arg parser (`/s`, `/c`, `/p HWND`), and the public
-// `run_main(saver, name)` entry point. The 10 r* effect binary
-// crates in screensavers/ enable the `screensaver-runtime` feature to
-// get this module; other library consumers don't.
-#[cfg(feature = "screensaver-runtime")]
-pub mod screensaver_runtime;
-
-// Lifecycle foreground additions (advanced console helpers and window)
 pub use lifecycle::foreground::set_tui_panic_hook;
 #[cfg(all(feature = "window", feature = "widgets"))]
 pub use lifecycle::foreground::tui_bootstrap::{is_app_shutting_down, set_app_shutting_down};
@@ -130,7 +81,7 @@ pub use lifecycle::foreground::tui_bootstrap::{is_app_shutting_down, set_app_shu
 #[cfg(feature = "window")]
 pub use lifecycle::foreground::window::{hide_console_at_startup, show_console_window};
 #[cfg(feature = "window")]
-#[allow(deprecated)] // Intentional: Re-exporting legacy conhost relaunch helpers for backward compatibility with older apps
+#[allow(deprecated)]
 pub use lifecycle::foreground::window::{
     RECT, MONITORINFO, COORD, SMALL_RECT, CONSOLE_SELECTION_INFO, POINT,
     get_console_rect, get_window_rect, set_window_pos, center_console_window, query_cursor_pos,
@@ -150,83 +101,45 @@ pub use lifecycle::foreground::console::{
 pub use core::{SystemInfo, hsl_to_rgb, rgb_to_hsl, write_file_atomic};
 pub use platform::native::sys_info::get_system_info;
 
-// GPU compute enhancements
+// GPU compute
 #[cfg(feature = "gpu")]
 pub use platform::native::gpu::{init_headless_gpu, run_compute_shader};
 
-// Theme enhancements
+// Theme
 pub use platform::native::sys_info::{SystemTheme, query_accent_color, query_system_theme};
 
-// =====================================================
-// Deprecated type aliases (Verb+Noun rename, 3.x -> 3.x+1)
-// =====================================================
-// The 5 TUI effects were renamed in 3.0.17 to follow the Verb × Noun taxonomy
-// (e.g. MatrixRain -> FallingGlyphs). The aliases below keep older r* consumers
-// compiling. New code should use the new names directly.
+// Deprecated type aliases
 #[cfg(feature = "effects")]
-#[deprecated(note = "renamed to FallingGlyphs; use library::interface::tui::effects::FallingGlyphs")]
-pub type MatrixRain = interface::tui::effects::FallingGlyphs;
+#[deprecated(note = "renamed to FallingGlyphs; use library::ui::effects::FallingGlyphs")]
+pub type MatrixRain = ui::effects::FallingGlyphs;
 #[cfg(feature = "effects")]
-#[deprecated(note = "renamed to FlowingParticles; use library::interface::tui::effects::FlowingParticles")]
-pub type SimpleParticles = interface::tui::effects::FlowingParticles;
+#[deprecated(note = "renamed to FlowingParticles; use library::ui::effects::FlowingParticles")]
+pub type SimpleParticles = ui::effects::FlowingParticles;
 #[cfg(feature = "effects")]
-#[deprecated(note = "renamed to PulledParticles; use library::interface::tui::effects::PulledParticles")]
-pub type GravityParticles = interface::tui::effects::PulledParticles;
+#[deprecated(note = "renamed to PulledParticles; use library::ui::effects::PulledParticles")]
+pub type GravityParticles = ui::effects::PulledParticles;
 #[cfg(feature = "effects")]
-#[deprecated(note = "renamed to FallingDroplets; use library::interface::tui::effects::FallingDroplets")]
-pub type RainEffect = interface::tui::effects::FallingDroplets;
+#[deprecated(note = "renamed to FallingDroplets; use library::ui::effects::FallingDroplets")]
+pub type RainEffect = ui::effects::FallingDroplets;
 #[cfg(feature = "effects")]
-#[deprecated(note = "renamed to RisingFlames; use library::interface::tui::effects::RisingFlames")]
-pub type FireEffect = interface::tui::effects::RisingFlames;
-
-
-
-// =====================================================
-// Prep for multi-crate future (per taxonomy sections)
-// =====================================================
-// When ready, this can become a Cargo workspace:
-// [workspace]
-// members = ["core", "interface/tui", "lifecycle", "platform/native", "role/*"]
-// Each section crate would re-export from its modules.
-// For now, single crate keeps git-dep + [patch] simple for r* apps.
-// Update consumers gradually to use taxonomy paths (e.g. library::interface::tui).
+#[deprecated(note = "renamed to RisingFlames; use library::ui::effects::RisingFlames")]
+pub type FireEffect = ui::effects::RisingFlames;
 
 /// Extension trait to expose background daemon services over IPC.
 #[cfg(feature = "interface-api")]
 pub trait DaemonIpcExt {
-    /// Exposes the daemon service via IPC using the Headless/API layer.
-    /// Binds to a local named pipe (Windows) or domain socket (Unix) named after the daemon,
-    /// and listens for requests.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use library::lifecycle::background::daemon::{DaemonService, DaemonConfig};
-    /// use library::interface::api::{IpcResponse, IpcRequest};
-    /// use library::DaemonIpcExt;
-    ///
-    /// let config = DaemonConfig::new("my_daemon");
-    /// let daemon = DaemonService::bootstrap(config).unwrap();
-    ///
-    /// daemon.run_ipc_server(|req| {
-    ///     match req.command.as_str() {
-    ///         "status" => IpcResponse::ok("running", ""),
-    ///         _ => IpcResponse::err("unknown command"),
-    ///     }
-    /// }).unwrap();
-    /// ```
-    fn run_ipc_server<F>(&self, handler: F) -> Result<(), crate::error::LibraryError>
+    fn run_ipc_server<F>(&self, handler: F) -> Result<(), crate::core::error::LibraryError>
     where
         F: Fn(interface::api::IpcRequest) -> interface::api::IpcResponse;
 }
 
 #[cfg(feature = "interface-api")]
-impl DaemonIpcExt for lifecycle::background::daemon::DaemonService {
-    fn run_ipc_server<F>(&self, handler: F) -> Result<(), crate::error::LibraryError>
+impl DaemonIpcExt for apps::daemon::DaemonService {
+    fn run_ipc_server<F>(&self, handler: F) -> Result<(), crate::core::error::LibraryError>
     where
         F: Fn(interface::api::IpcRequest) -> interface::api::IpcResponse
     {
-        let host = interface::api::IpcServiceHost::new(self.name())?;
+        let host = toolkit::ipc::IpcServiceHost::new(self.name())?;
         host.run(handler);
         Ok(())
     }

@@ -11,7 +11,27 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
 use ratatui::widgets::Widget;
-use library::interface::tui::design::prelude::*;
+use library::ui::theme::{get_theme, accent_color_from_hex};
+use library::ui::colors::AccentTheme;
+use library::ui::status_bar::StatusBar;
+use library::ui::toast::{ToastBox, ToastKind};
+use library::ui::layout_guard::is_too_small;
+use library::ui::layout::centered_rect;
+use library::ui::text::{wrap_text, char_width};
+use library::ui::markdown_viewer::MarkdownViewerState;
+use library::ui::effects::{
+    FallingGlyphs, FlowingParticles, PulledParticles, FallingDroplets,
+    RisingFlames, FallingComets, PulsingGlyphs, PulsingWaves,
+    FlowingBlocks, PulledBlocks, RisingGlyphs, PulsingParticles, TuiEffect,
+};
+use library::core::logo_block::render_logo_block;
+
+// The 4.0 unified design system targets a 100x35 minimum canvas for all
+// r* TUIs (see library::apps::tui_bootstrap SetSize comment). These
+// constants were previously in `interface::tui::constants`, which was
+// removed in the 4.2 flat-tree restructure; the test now inlines them.
+const MIN_TERMINAL_WIDTH: u16 = 100;
+const MIN_TERMINAL_HEIGHT: u16 = 35;
 
 // ---------------------------------------------------------------------------
 // 1. Theme + accent-color façade is intact and produces a valid ThemeColors
@@ -169,7 +189,6 @@ fn facade_text_wrap_handles_ascii_and_wide() {
 // ---------------------------------------------------------------------------
 #[test]
 fn facade_all_effects_construct_at_80x24() {
-    use library::interface::tui::design::prelude::*;
     let (c, r) = (80usize, 24usize);
     let mut grid = vec![library::core::TerminalCell::default(); c * r];
     let mut effects: Vec<Box<dyn TuiEffect>> = vec![
