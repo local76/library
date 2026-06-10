@@ -58,6 +58,7 @@ pub use lifecycle::background::event_log;
 pub use lifecycle::background::notification;
 #[cfg(feature = "clipboard")]
 pub use lifecycle::background::clipboard;
+#[cfg(feature = "service")]
 pub use lifecycle::background::daemon;
 #[cfg(feature = "window")]
 pub use lifecycle::foreground::identity;

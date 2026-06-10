@@ -138,7 +138,8 @@ fn strip_comments(content: &str) -> String {
 }
 
 #[test]
-#[ignore = "Broken by the 4.2 flat-tree restructure: not all `crate::toolkit::*` and `crate::apps::*` imports are gated with `#[cfg(feature = \"...\")]` yet, so `--no-default-features` fails to compile. The 4-layer taxonomy that this test enforced has been replaced by the simpler 5-folder tree; re-enable this test after each toolkit/apps module is properly feature-gated. Tracked as a follow-up to the 4.2 restructure."]
+
+#[ignore = "Re-ignored in 5d: the screensavers (10 files) have struct fields and method bodies that depend on RgbController/RgbColor from the `rgb` feature. Feature-gating those requires gating the field declaration, the constructor line, and every self.rgb.X() call site in every method, which is a larger refactor than the 2-hour stop-the-line budget for 5d allows. The library builds cleanly with default features and --all-features; this test will re-enable once the screensavers are either (a) feature-gated throughout, or (b) reworked to use a trait-object pattern that abstracts over the rgb-vs-no-rgb split. Tracked as a 4.3 follow-up."]
 fn test_taxonomy_features_compile() {
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
 
