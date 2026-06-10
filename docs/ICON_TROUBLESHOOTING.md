@@ -16,10 +16,35 @@ or falls back to a generic console icon entirely — the user sees
 "all my screensavers have the same icon" even though every `.scr` has
 its own brand asset on disk.
 
-Microsoft's `embed-resource` 2.x crate parses PNG-compressed ICOs
-correctly, so the fix is to migrate. This page documents the verifier
-you should run after any icon-related change to confirm the migration
-worked.
+In the 2026-06-09 release, we migrated to Microsoft's
+`embed-resource` 2.x crate, which parses PNG-compressed ICOs
+correctly at the build-script level. The migration fixed the parser
+issue but uncovered a second issue: the Windows SDK `rc.exe 10.0+`
+compiler that `embed-resource` invokes has its **own** ICONDIR bug.
+When given a single `1 ICON "path.ico"` directive referencing a
+multi-size ICO, `rc.exe 10.0+` mangles the ICONDIR offset/size fields
+for entries 2..N in the final PE resource directory — the same
+symptom as the `winres` bug, but caused by a different stage of the
+toolchain.
+
+The 4.2 workaround lives in
+`library::core::rc_split::split_for_rc`. When the library's
+`write_brand_rc` helper generates the `.rc` file, it first calls
+`split_for_rc` on the source ICO, which:
+
+1. Parses the multi-size ICO into its 4 constituent sizes
+   (16×16, 32×32, 48×48, 256×256) using the `ico` crate.
+2. Writes each size as a single-size ICO into
+   `assets/<name>_split/<size>.ico`.
+3. Returns 4 `(resource_id, path)` pairs to the caller.
+
+The generated `.rc` then declares **4 separate** `IDI_ICON1`...
+`IDI_ICON4` resources, one per single-size file. `rc.exe 10.0+`
+handles 4 single-size ICOs correctly because the ICONDIR-corruption
+bug only triggers when there is more than one size in a single ICO.
+
+This page documents the verifier you should run after any icon-related
+change to confirm both stages of the pipeline (parse + compile) worked.
 
 ## ICONDIR byte layout (what to look for)
 
@@ -108,7 +133,8 @@ $results | Format-Table -AutoSize
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `Valid32bpp` is 1, all other entries are corrupt | `winres 0.1.x` parser | Switch to `embed-resource 2.x` per `VISUAL_STANDARDS.md` § C |
+| `Valid32bpp` is 1, all other entries are corrupt (pre-2026-06-09 builds) | `winres 0.1.x` parser | Re-build with `embed-resource` 2.x per `VISUAL_STANDARDS.md` § C |
+| `Valid32bpp` is 1 on a 2026-06-09-or-later build, but `assets/<name>_split/` exists and has 4 ICOs | `split_for_rc` ran but the generated `.rc` declared them as a single `1 ICON` directive | Re-build; if the issue persists, check that `library::core::build_resources::write_brand_rc` is being called and the `library` dep is on the 4.2 line or later |
 | `Count` is 0 (no ICONDIR found at all) | Build script never ran, or `target_os != "windows"` | Confirm `cargo build --release` on Windows, not cross-compile |
 | `Valid32bpp` is 4 but file shows wrong icon in Explorer | Windows icon cache stale | `ie4uinit.exe -show` (or restart `explorer.exe`) |
 | `Count` is 4 but sizes are 16, 32, 64, 128 (missing 256) | Source ICO was generated without 256 | Re-export with 16/32/48/256 at 32bpp per `VISUAL_STANDARDS.md` § B |

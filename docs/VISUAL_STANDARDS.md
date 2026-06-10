@@ -70,27 +70,45 @@ To ensure the icons render crisp and sharp at all operating system scales (from 
 - **`app.ico`**. Multi-resolution Windows ICO container containing exactly **`256x256` (PNG-compressed)**, **`48x48`**, **`32x32`**, and **`16x16`** sizes at 32-bit RGBA depth. Having all four sizes prevents blurry scaling and ensures Windows Explorer does not fall back to standard console icons in list, details, or taskbar views.
 - **Padding**. Leave a **15% padding margin** around the container bounds to allow glowing neon offsets and glares to fade out naturally without edge clipping.
 
-### C. Windows Explorer resource metadata
+### C. Windows Explorer resource metadata (4.2)
 
-To ensure the applications look polished in Windows Explorer (e.g. when right-clicking the binary and viewing **Properties → Details**), every utility must compile the following PE metadata into its resources using a build script (`build.rs`) and the **`embed-resource` 2.x** crate:
+To ensure the applications look polished in Windows Explorer (e.g. when
+right-clicking the binary and viewing **Properties → Details**), every
+utility must compile the following PE metadata into its resources via a
+build script (`build.rs`) that calls the library's
+`core::build_resources::write_brand_rc` helper plus Microsoft's
+`embed-resource` 2.x crate:
 
-- **File Description**. A clean, descriptive name of the utility (e.g., `helm - System Info Utility`).
+- **File Description**. A clean, descriptive name of the utility
+  (e.g., `helm - System Info Utility`). Sourced from `CARGO_PKG_NAME`
+  by default; override with a literal string in your `build.rs`.
 - **Product Name**. Grouped under the suite name: `local76 Suite`.
-- **Company Name**. Set as `local76`.
-- **Legal Copyright**. Set as `Copyright © 2026 local76`.
-- **Version Information**. Automatically synchronizes the file and product versions with the crate's `Cargo.toml` version.
+  Exposed as `library::core::build_resources::DEFAULT_PRODUCT_NAME`.
+- **Company Name**. Set as `local76`. Exposed as
+  `library::core::build_resources::DEFAULT_COMPANY_NAME`.
+- **Legal Copyright**. Set as `Copyright © 2026 local76`. Exposed as
+  `library::core::build_resources::DEFAULT_LEGAL_COPYRIGHT`.
+- **Version Information**. Auto-synchronized with the crate's
+  `Cargo.toml` version by the `write_brand_rc` helper.
 
-> **Migration note (2026-06-09):** the historical `winres 0.1` template has been
-> deprecated. The `winres 0.1.x` parser mangles PNG-compressed multi-size ICOs,
-> which causes Windows Explorer to fall back to a generic console icon. The new
-> template below uses Microsoft's `embed-resource` 2.x crate, which correctly
-> preserves all four ICO sizes. The brand defaults
-> (`local76 Suite` / `local76` / `Copyright © 2026 local76`) are exposed via
-> `library::build_resources::{DEFAULT_PRODUCT_NAME, DEFAULT_COMPANY_NAME, DEFAULT_LEGAL_COPYRIGHT}`
-> so they live in one place. See `ICON_TROUBLESHOOTING.md` for the ICONDIR
-> verification recipe used to catch regressions.
+> **Migration note (2026-06-09 → 4.2 in 2026-Q3):** the historical
+> `winres 0.1` template was deprecated in the 2026-06-09 release.
+> The `winres 0.1.x` parser mangles PNG-compressed multi-size ICOs,
+> which causes Windows Explorer to fall back to a generic console
+> icon. The 4.2 template (the one in this doc) uses Microsoft's
+> `embed-resource` 2.x crate, which correctly preserves all four
+> ICO sizes. The brand defaults
+> (`local76 Suite` / `local76` / `Copyright © 2026 local76`) are
+> exposed via `library::core::build_resources::{DEFAULT_PRODUCT_NAME,
+> DEFAULT_COMPANY_NAME, DEFAULT_LEGAL_COPYRIGHT}` so they live in
+> one place. The Windows SDK `rc.exe 10.0+` ICONDIR-corruption bug
+> is worked around transparently by
+> `library::core::rc_split::split_for_rc`, which splits the multi-size
+> ICO into 4 single-size files and declares 4 separate ICON
+> resources in the generated `.rc`. See `ICON_TROUBLESHOOTING.md`
+> for the ICONDIR verification recipe used to catch regressions.
 
-#### Standard `build.rs` template
+#### Standard `build.rs` template (4.2)
 
 In the consuming crate's `Cargo.toml`:
 
@@ -99,29 +117,48 @@ In the consuming crate's `Cargo.toml`:
 embed-resource = "2"
 ```
 
-In its `build.rs`:
+In its `build.rs` (canonical 4.2 pattern; used by all 10
+`screensavers-*` shim binaries):
 
 ```rust
-use library::build_resources::{
-    DEFAULT_COMPANY_NAME, DEFAULT_LEGAL_COPYRIGHT, DEFAULT_PRODUCT_NAME, prepare_icon,
+use std::path::Path;
+use library::core::build_resources::{
+    write_brand_rc, DEFAULT_COMPANY_NAME, DEFAULT_LEGAL_COPYRIGHT, DEFAULT_PRODUCT_NAME,
 };
 
 fn main() {
-    if let Some((icon_path, meta)) = prepare_icon("assets/brand/app.ico") {
-        let mut rc = embed_resource::new();
-        rc.set_icon(&icon_path);
-        rc.set("FileDescription", &meta.file_description);
-        rc.set("ProductName",     DEFAULT_PRODUCT_NAME);
-        rc.set("CompanyName",     DEFAULT_COMPANY_NAME);
-        rc.set("LegalCopyright",  DEFAULT_LEGAL_COPYRIGHT);
-        rc.compile().expect("failed to compile winres resource");
-    }
+    let ico = "assets/scene-<scene>.ico";
+    if std::env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("windows") { return; }
+    if !Path::new(ico).exists() { return; }
+
+    let pkg = std::env::var("CARGO_PKG_NAME").unwrap_or_default();
+    let rc = write_brand_rc(
+        "build/windows_resource.rc",
+        ico,
+        &pkg,
+        DEFAULT_PRODUCT_NAME,
+        DEFAULT_COMPANY_NAME,
+        DEFAULT_LEGAL_COPYRIGHT,
+    );
+    embed_resource::compile(&rc, embed_resource::NONE);
 }
 ```
 
-> The exact `embed_resource::new()` / `set_icon` / `set` / `compile` calls
-> match the 2.x API. If a future 3.x release renames the entry point, only
-> the call site changes — `library::build_resources` does not need an update.
+The `write_brand_rc` function returns the absolute path to the
+generated `.rc` file. `embed_resource::compile(&rc, embed_resource::NONE)`
+invokes the `embed-resource` 2.x build script under the hood, which
+will select `windres` on `*-pc-windows-gnu` and `rc.exe` on
+`*-pc-windows-msvc`. The ICONDIR-corruption workaround in
+`split_for_rc` is applied transparently — you don't need to know
+about it.
+
+If your app's icon is at a different path (e.g. `assets/brand/app.ico`
+instead of `assets/scene-<scene>.ico`), just change the `ico` string
+in the `build.rs`. The library handles the rest.
+
+If you need a custom `FileDescription` that doesn't match the
+`CARGO_PKG_NAME`, pass a literal string instead of `&pkg` in the
+third argument to `write_brand_rc`.
 
 ---
 
