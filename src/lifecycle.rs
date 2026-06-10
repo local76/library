@@ -3,8 +3,6 @@
 
 pub mod foreground {
     #[cfg(feature = "window")]
-    pub use crate::apps::console;
-    #[cfg(feature = "window")]
     pub use crate::apps::guard;
     #[cfg(feature = "sys-info")]
     pub use crate::apps::identity;

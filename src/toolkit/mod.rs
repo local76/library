@@ -36,4 +36,3 @@ pub mod platform_web;
 #[cfg(feature = "sys-info")]
 pub mod sys_info;
 
-pub mod wlan;

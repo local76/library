@@ -19,8 +19,6 @@ pub mod file_log;
 pub mod notification;
 
 #[cfg(feature = "window")]
-pub mod console;
-#[cfg(feature = "window")]
 pub mod guard;
 #[cfg(feature = "sys-info")]
 pub mod identity;
@@ -34,11 +32,6 @@ pub mod tui_bootstrap;
 
 #[cfg(feature = "window")]
 pub mod window;
-
-#[cfg(feature = "sys-info")]
-pub mod doctor;
-#[cfg(feature = "sys-info")]
-pub mod scaffold;
 
 #[cfg(feature = "role-application")]
 pub mod game;

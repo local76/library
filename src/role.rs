@@ -9,7 +9,6 @@ pub mod application {
     pub use crate::apps::game;
     pub use crate::core::screen_palette as palette;
     pub use crate::core::formatting;
-    pub use crate::screensavers as scenes;
     
     pub mod rgb {
         #[cfg(feature = "rgb")]

@@ -6,7 +6,7 @@ edition = "2024"
 rust-version = "1.85"
 license = "MIT"
 publish = false
-description = "Shared utility library, stubs, and TUI widgets for the local76 ecosystem"
+description = "Shared utility library, stubs, and UI widgets for the local76 ecosystem"
 
 [dependencies]
 ratatui = { version = "0.30", default-features = false, features = ["termwiz"], optional = true }

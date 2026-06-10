@@ -13,14 +13,12 @@ pub mod core;
 pub mod ui;
 pub mod toolkit;
 pub mod apps;
-pub mod screensavers;
 
 // Backward-compatibility shims (re-exporting from the new structure)
 pub mod interface;
 pub mod lifecycle;
 pub mod platform;
 pub mod role;
-pub mod screensaver_runtime;
 
 // Re-export error and main traits
 pub mod error {
@@ -97,12 +95,7 @@ pub use lifecycle::foreground::window::{
     BorderlessConsole, ConsoleTitleGuard,
     SingleInstanceGuard
 };
-#[cfg(feature = "window")]
-pub use lifecycle::foreground::console::{
-    query_high_contrast, console_window_rect, update_screensaver_active,
-    update_screensaver_timeout, get_console_title, set_console_title,
-    hide_console_scrollbar
-};
+
 
 // Core enhancements
 pub use core::{SystemInfo, hsl_to_rgb, rgb_to_hsl, write_file_atomic};

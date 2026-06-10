@@ -10,8 +10,6 @@ pub mod tui {
     pub use crate::ui::text::{visible_len, char_width};
     
     pub mod widgets {
-        pub use crate::ui::accent_gauge::AccentGauge;
-        pub use crate::ui::accent_list::AccentList;
         pub use crate::ui::textbox::TextBox;
         pub use crate::ui::scrollbar::AccentScrollbar as ScrollBar;
         pub use crate::ui::tabs::AccentTabs as Tabs;
@@ -47,7 +45,6 @@ pub mod tui {
             pub use crate::ui::status_bar::StatusBar;
             pub use crate::ui::title_banner::ButtonRect;
             pub use crate::ui::mouse_selection::MouseSelection;
-            pub use crate::ui::markdown_viewer::MarkdownViewerState;
         }
     }
 }
@@ -65,8 +62,4 @@ pub mod api {
 }
 
 pub mod cli {
-    #[cfg(feature = "sys-info")]
-    pub use crate::apps::doctor;
-    #[cfg(feature = "sys-info")]
-    pub use crate::apps::scaffold;
 }

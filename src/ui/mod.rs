@@ -3,10 +3,6 @@
 //! **Taxonomy Classification**: Interface (TUI/GUI / Presentation Layer).
 
 #[cfg(feature = "widgets")]
-pub mod accent_gauge;
-#[cfg(feature = "widgets")]
-pub mod accent_list;
-#[cfg(feature = "widgets")]
 pub mod textbox;
 #[cfg(feature = "widgets")]
 pub mod scrollbar;
@@ -17,8 +13,6 @@ pub mod tabs;
 pub mod status_bar;
 #[cfg(feature = "widgets")]
 pub mod toast;
-#[cfg(feature = "widgets")]
-pub mod markdown_viewer;
 #[cfg(feature = "widgets")]
 pub mod screensaver_renderer;
 
@@ -45,9 +39,6 @@ pub mod title_banner;
 pub mod egui_helpers;
 #[cfg(feature = "gui")]
 pub mod gui_native;
-
-#[cfg(feature = "widgets")]
-pub mod spring;
 
 #[cfg(feature = "effects")]
 pub mod effects;
