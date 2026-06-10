@@ -68,6 +68,33 @@ pub fn accent_color_from_hex(hex: &str) -> Color {
     }
 }
 
+/// Build a `ThemeColors` from the user's `theme_mode` preference and the
+/// system accent color in one call.
+///
+/// `theme_mode` is the same string the apps store in their config:
+/// - `"dark"`  → force dark theme
+/// - `"light"` → force light theme
+/// - `"auto"`  (or anything else) → query the OS for dark/light preference
+///
+/// The accent color is always read from the OS (DWM on Windows, XDG on
+/// Linux); apps that need a user-overridden accent should call
+/// `get_theme(dark, accent_color_from_hex(override_hex))` directly.
+///
+/// This is the helper every r* TUI's "init theme" / "refresh theme" path
+/// uses — it replaces the 3-line dance of `match theme_mode.as_str()`,
+/// `query_dark_mode`, and `query_accent_color` that pulse, helm, scout, and
+/// ignite each had duplicated in their `App::new` / `App::refresh_theme`.
+#[cfg(feature = "sys-info")]
+pub fn current_theme(theme_mode: &str) -> ThemeColors {
+    let dark = match theme_mode {
+        "dark" => true,
+        "light" => false,
+        _ => crate::toolkit::sys_info::query_dark_mode(),
+    };
+    let (r, g, b) = crate::toolkit::sys_info::query_accent_color();
+    get_theme(dark, Color::Rgb(r, g, b))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -75,7 +102,7 @@ mod tests {
     #[test]
     fn test_theme_colors_coverage() {
         let accent = Color::Cyan;
-        
+
         // 1. Test Dark Theme
         let dark = get_theme(true, accent);
         assert_eq!(dark.accent, accent);
@@ -95,5 +122,22 @@ mod tests {
         assert_eq!(light.quit_btn, Color::Rgb(200, 50, 50));
         // Verify quit_btn and warning are different semantic colors
         assert_ne!(light.warning, light.quit_btn);
+    }
+
+    #[cfg(feature = "sys-info")]
+    #[test]
+    fn test_current_theme_force_dark() {
+        // "dark" string always produces a dark theme (no OS query)
+        let t = current_theme("dark");
+        // Dark theme has light text and a vivid accent
+        assert_eq!(t.text_main, Color::Rgb(248, 248, 242));
+    }
+
+    #[cfg(feature = "sys-info")]
+    #[test]
+    fn test_current_theme_force_light() {
+        let t = current_theme("light");
+        // Light theme has dark text
+        assert_eq!(t.text_main, Color::Rgb(40, 42, 54));
     }
 }

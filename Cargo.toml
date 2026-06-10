@@ -1,6 +1,6 @@
 [package]
 name = "library"
-version = "2026.6.10"
+version = "2026.6.11"
 authors = ["Jeryd <jerydleuck@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
@@ -88,6 +88,14 @@ scenes = []
 # host a screensaver process do not enable it. Default-off because it
 # pulls in `libc` on non-Windows and the Win32 GDI stack on Windows.
 screensaver-runtime = ["scenes", "platform-native", "role-application", "lifecycle-foreground", "dep:libc"]
+
+# library 4.3: cross-app TUI chrome (quit/help key predicates, F1-F7
+# doc keys, title-bar drag, button hit-tests, text-selection rules).
+# The 5 TUI apps enable this to drop ~80 lines of duplicated chrome
+# boilerplate per app. Default-off because it requires the `widgets`
+# feature (crossterm events) and a few of the legacy consumers don't
+# enable widgets.
+chrome = ["widgets"]
 
 # Granular / legacy (kept for compatibility with existing consumers)
 gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]

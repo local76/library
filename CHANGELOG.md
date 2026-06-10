@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.6.11] - 2026-06-10
+
+### Added
+- **library 4.3 — Cross-app TUI chrome module**: new `library::apps::chrome` namespace (feature-gated on `chrome = ["widgets"]`) collects the keyboard, mouse, and embedded-docs helpers every r* TUI app used to re-implement. The 5 TUI apps (pulse, helm, scout, ignite, trance) all enable the new `chrome` feature in their `Cargo.toml`.
+  - `embedded_docs`: `DOC_FILES`, `doc_for_f_key(n)`, `is_doc_f_key(code)`, `open_embedded_markdown(code)` — the F1..F7 README/SUPPORT/LICENSE/COPYRIGHT/PRIVACY/SECURITY/CONTRIBUTING mapping.
+  - `app_state`: `is_quit_key(code, mods)`, `is_quit_key_event(&KeyEvent)`, `is_help_toggle_key(code)`, `scroll_for_key(code, scroll, line_count, viewport_h)` — the 4 key predicates that the apps' `app::keys::handle_key` functions all open with.
+  - `chrome_mouse`: `ChromeLayout`, `BtnRect`, `ChromeAction`, `handle_chrome_mouse(layout, event, markdown_open)`, `text_selection_release_decision(start, end)` — the title-bar drag, quit/help button hit-tests, text-selection rules, and markdown scroll-wheel that every r* TUI's `app::mouse::handle_mouse` rolls.
+- **library::ui::theme::current_theme(theme_mode)** — replaces the 3-line `match theme_mode + query_dark_mode + query_accent_color` dance in apps' `App::new` and `App::refresh_theme`. Pulse migrates to it directly; helm/ignite still use the lower-level `get_theme` + `accent_color_from_hex` form because they accept a CLI-overridden accent hex.
+- **29 new unit tests** for the chrome module: 5 for `embedded_docs`, 11 for `app_state`, 13 for `chrome_mouse`. Library test count rises 100 → 131 (with `chrome` feature).
+
+### Changed
+- **scout** and **ignite** now use `library::lifecycle::background::file_log` directly (deleted their local 67-line `src/logger.rs` each). Both apps now call `set_log_app_name("app/scout")` / `set_log_app_name("app/ignite")` at startup, matching the pattern already used by pulse and helm — log files now correctly land at `%APPDATA%\local76\app\scout\log.txt` (and `\ignite\`) instead of the default `\library\log.txt` folder.
+- **scout** and **ignite** now use `library::toolkit::config::AppConfig<T>` (deleted their local 130-line `src/config.rs` each). The new `src/config.rs` in each is a ~90-line thin shim that defines the `Config` struct + `ConfigFields` impl, exactly mirroring the pulse and helm pattern.
+- **pulse** replaced its local `pub const DOC_FILES: &[&str]` table in `src/ui/overlays.rs` with `pub use library::apps::chrome::DOC_FILES`.
+- **pulse** deleted its `src/docs.rs` (`doc_for_f_key` duplicate) and routes through `library::apps::chrome::doc_for_f_key` instead.
+- **helm** deleted its `src/docs.rs` (dead code — helm has no F-key handling yet). The `mod docs;` line in `main.rs` was removed.
+- **ignite** and **trance** now route F1..F7 doc opens and markdown-viewer scroll keys through `library::apps::chrome::{open_embedded_markdown, scroll_for_key}` instead of 21-line and 78-line inlined match blocks respectively. Each app keeps a small 10-line `doc_content(name)` helper to map filename → embedded `&'static str` (the actual `include_str!` of the 7 docs still lives in each app crate because the files live in each app's repo root).
+- **pulse** uses `library::ui::theme::current_theme` in `App::new` and `App::refresh_theme`. The local `AppTheme::new(dark, accent, ...)` constructor is replaced with `AppTheme::from_base(theme, ...)` because the base theme is now constructed externally.
+
+### Net effect
+- **~310 lines deleted** from the 5 apps (logger: 134, config: 164, F-key blocks: ~85, scroll blocks: ~30, DOC_FILES: 7, docs.rs: 33, theme boilerplate: ~10).
+- **~580 lines added** to library (chrome module: 530, current_theme: 30, tests: 70 already counted).
+- **+29 unit tests** in library.
+- **Zero breaking changes** for downstream consumers; all 5 apps compile cleanly; all 131 library tests + 14 trance tests pass.
+
 ## [2026.6.10] - 2026-06-10
 
 ### Changed

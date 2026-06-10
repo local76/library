@@ -42,3 +42,6 @@ pub mod scaffold;
 
 #[cfg(feature = "role-application")]
 pub mod game;
+
+#[cfg(feature = "chrome")]
+pub mod chrome;
