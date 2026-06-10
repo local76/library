@@ -31,6 +31,22 @@ pub fn hide_console_at_startup() -> Option<*mut std::ffi::c_void> {
     }
 }
 
+/// Re-shows the console window and brings it to the foreground on Windows.
+pub fn show_console_window() {
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(hwnd) = unsafe { get_console_hwnd() } {
+            unsafe {
+                windows_sys::Win32::UI::WindowsAndMessaging::ShowWindow(
+                    hwnd,
+                    windows_sys::Win32::UI::WindowsAndMessaging::SW_SHOW,
+                );
+                windows_sys::Win32::UI::WindowsAndMessaging::SetForegroundWindow(hwnd);
+            }
+        }
+    }
+}
+
 /// Query if the console window is currently the active foreground window.
 /// Classification: Lifecycle (Foreground) + Platform (Native).
 pub fn is_console_focused() -> bool {

@@ -219,7 +219,7 @@ pub fn query_gpu_names() -> Vec<String> {
 
 pub fn query_network_adapters() -> Vec<crate::platform::NetworkAdapterInfo> {
     use crate::platform::NetworkAdapterInfo;
-    let mut adapters = Vec::new();
+    let mut adapters: Vec<NetworkAdapterInfo> = Vec::new();
 
     // Use "ip -o addr" for IPs + interfaces (common on Linux).
     if let Ok(output) = std::process::Command::new("ip").args(&["-o", "addr", "show"]).output() {

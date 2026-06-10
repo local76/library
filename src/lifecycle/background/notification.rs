@@ -68,6 +68,34 @@ pub fn show_toast_notification_with_id(app_id: &str, title: &str, message: &str)
     }
 }
 
+/// Clear all toast notifications for the given App ID from the Action Center.
+pub fn clear_toast_notifications(app_id: &str) {
+    #[cfg(all(target_os = "windows", feature = "notification"))]
+    {
+        let _ = (|| -> Result<(), Box<dyn std::error::Error>> {
+            use windows::UI::Notifications::ToastNotificationManager;
+            let history = ToastNotificationManager::History()?;
+            history.ClearWithId(&windows::core::HSTRING::from(app_id))?;
+            Ok(())
+        })();
+    }
+    #[cfg(not(all(target_os = "windows", feature = "notification")))]
+    {
+        let _ = app_id;
+    }
+}
+
+/// Clear all toast notifications for the current application.
+pub fn clear_my_toast_notifications() {
+    let exe_name = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.file_name().map(|f| f.to_string_lossy().to_string()))
+        .unwrap_or_else(|| "library".to_string());
+    let exe_clean = exe_name.strip_suffix(".exe").unwrap_or(&exe_name);
+    let app_id = format!("Local76.{}", exe_clean);
+    clear_toast_notifications(&app_id);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

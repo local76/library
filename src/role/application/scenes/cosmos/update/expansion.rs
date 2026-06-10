@@ -1,7 +1,7 @@
 use crate::role::application::palette::query_current_palette;
-use super::effect::LifeEffect;
-use super::types::{Particle, to_universe};
-use super::update_accretion_helpers::{handle_seed_merges, handle_logo_character_drift, handle_nebular_stellar_ignition};
+use super::LifeEffect;
+use super::super::types::{Particle, to_universe};
+use super::accretion_helpers::{handle_seed_merges, handle_logo_character_drift, handle_nebular_stellar_ignition};
 
 pub fn update_expansion(eff: &mut LifeEffect, delta: f32, _cols: usize, _rows: usize) {
     let dir = if eff.spin_clockwise { 1.0f32 } else { -1.0f32 };
@@ -330,3 +330,4 @@ pub fn update_accretion(eff: &mut LifeEffect, delta: f32, cols: usize, rows: usi
     // Stellar Ignition
     handle_nebular_stellar_ignition(eff, dir);
 }
+

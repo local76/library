@@ -1,5 +1,6 @@
-mod effect;
+mod drawing;
 mod types;
+mod update;
 
-pub use effect::Beams;
-pub use types::{DustParticle, Spotlight, Star, default_spotlights};
+pub use types::{default_spotlights, DustParticle, Spotlight, Star};
+pub use update::Beams;

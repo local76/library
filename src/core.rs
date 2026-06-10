@@ -264,3 +264,28 @@ pub use screensaver::{Screensaver, ScreensaverEffect, ScreensaverState};
 /// import it without violating the 4-layer taxonomy (role is not
 /// allowed to import from interface).
 pub mod logo_block;
+
+/// Write to a file atomically by writing to a temporary file first and renaming it.
+/// Guarantees that the target file is never left partially written/corrupted on power loss.
+pub fn write_file_atomic<P: AsRef<std::path::Path>, C: AsRef<[u8]>>(path: P, content: C) -> std::io::Result<()> {
+    let path = path.as_ref();
+    // Use the same directory for temp file to ensure it's on the same filesystem (so rename is atomic)
+    let temp_name = format!(
+        ".tmp_{}_{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    );
+    let temp_path = path.parent()
+        .map(|p| p.join(&temp_name))
+        .unwrap_or_else(|| std::path::PathBuf::from(temp_name));
+
+    std::fs::write(&temp_path, content)?;
+    if let Err(e) = std::fs::rename(&temp_path, path) {
+        let _ = std::fs::remove_file(&temp_path);
+        return Err(e);
+    }
+    Ok(())
+}

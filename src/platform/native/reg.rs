@@ -29,9 +29,9 @@ pub const HKEY_USERS: HKEY = 3;
 #[cfg(not(all(feature = "reg", target_os = "windows")))]
 fn get_registry_file_path() -> Option<std::path::PathBuf> {
     if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
-        Some(std::path::PathBuf::from(xdg).join("apps").join("registry.conf"))
+        Some(std::path::PathBuf::from(xdg).join("local76").join("registry.conf"))
     } else if let Ok(home) = std::env::var("HOME") {
-        Some(std::path::PathBuf::from(home).join(".config").join("apps").join("registry.conf"))
+        Some(std::path::PathBuf::from(home).join(".config").join("local76").join("registry.conf"))
     } else {
         None
     }
@@ -101,9 +101,10 @@ fn read_entry(hive: HKEY, path: &str, key: &str) -> Option<(char, String)> {
         if line.starts_with(&prefix) {
             let val_part = &line[prefix.len()..];
             if val_part.len() >= 2 && val_part.as_bytes()[1] == b':' {
-                let vtype = val_part.chars().next().unwrap();
-                let value = val_part[2..].to_string();
-                return Some((vtype, value));
+                if let Some(vtype) = val_part.chars().next() {
+                    let value = val_part[2..].to_string();
+                    return Some((vtype, value));
+                }
             }
         }
     }
@@ -268,10 +269,11 @@ pub fn list_values(hive: HKEY, path: &str) -> Option<Vec<(String, String)>> {
                     let key_name = &rest[..idx];
                     let val_part = &rest[idx+1..];
                     if val_part.len() >= 2 && val_part.as_bytes()[1] == b':' {
-                        let vtype = val_part.chars().next().unwrap();
-                        let val_str = &val_part[2..];
-                        if vtype == 'S' {
-                            values.push((key_name.to_string(), val_str.to_string()));
+                        if let Some(vtype) = val_part.chars().next() {
+                            let val_str = &val_part[2..];
+                            if vtype == 'S' {
+                                values.push((key_name.to_string(), val_str.to_string()));
+                            }
                         }
                     }
                 }

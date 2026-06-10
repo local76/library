@@ -56,7 +56,7 @@ fn set_priority_values(win_class: u32, unix_nice: i32) {
 
     #[cfg(unix)]
     unsafe {
-        extern "C" {
+        unsafe extern "C" {
             fn setpriority(which: i32, who: u32, priority: i32) -> i32;
         }
         let _ = setpriority(0, 0, unix_nice);

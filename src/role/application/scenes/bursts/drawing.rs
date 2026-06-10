@@ -1,7 +1,7 @@
 use crate::core::TerminalCell;
 use crate::core::logo_block::render_logo_block;
 use crate::platform::native::sys_info::get_system_info;
-use super::effect::Fireworks;
+use super::update::Fireworks;
 use super::types::ActiveExplosion;
 
 impl Fireworks {

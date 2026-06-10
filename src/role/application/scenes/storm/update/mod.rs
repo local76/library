@@ -3,9 +3,14 @@ use crate::core::screensaver::Screensaver;
 use crate::core::{LcgRng, TerminalCell};
 use crate::platform::native::sys_info::get_system_info;
 use crate::role::application::palette::query_current_palette;
-use crate::role::application::rgb::RgbController;
+use crate::role::application::rgb::{RgbController, is_openrgb_enabled};
 use crate::role::application::rgb::protocol::RgbColor;
 use super::types::{LogoCell, Drop, Splash, Phase, BirdState, Animal, SceneryCell};
+
+mod core;
+mod bird;
+mod lightning;
+mod scenery_and_animals;
 
 pub struct Pour {
     pub(crate) rng: LcgRng,
@@ -66,6 +71,12 @@ pub struct Pour {
     pub(crate) rgb: Option<RgbController>,
 }
 
+impl Default for Pour {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Pour {
     pub fn new() -> Self {
         // Pre-4.1 HKEY_CURRENT_USER registry reads (DropCount, AssembleSpeed)
@@ -114,7 +125,7 @@ impl Pour {
             animal_spawn_timer: 15.0,
             subtitle: String::new(),
             subtitle_timer: 0.0,
-            rgb: Some(RgbController::new()),
+            rgb: if is_openrgb_enabled() { Some(RgbController::new()) } else { None },
         }
     }
 
@@ -310,3 +321,4 @@ impl Screensaver for Pour {
         self.draw_impl(grid, cols, rows);
     }
 }
+

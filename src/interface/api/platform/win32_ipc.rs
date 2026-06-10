@@ -105,7 +105,7 @@ impl Win32IpcServer {
             }
         }
 
-        let mut buffer = [0u8; 1024];
+        let mut buffer = [0u8; 65536];
         let read_res = unsafe { read_pipe(self.handle.0, &mut buffer) };
 
         if let Ok(bytes_read) = read_res {
@@ -165,7 +165,7 @@ impl Win32IpcClient {
     pub fn send_request(&mut self, msg: &str) -> Result<String, Error> {
         unsafe {
             write_pipe(self.handle.0, msg.as_bytes())?;
-            let mut buffer = [0u8; 1024];
+            let mut buffer = [0u8; 65536];
             let bytes_read = read_pipe(self.handle.0, &mut buffer)?;
             let resp_str = String::from_utf8_lossy(&buffer[..bytes_read]).into_owned();
             Ok(resp_str)

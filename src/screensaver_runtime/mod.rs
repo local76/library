@@ -38,6 +38,8 @@
 
 #[cfg(not(target_os = "windows"))]
 use std::time::Duration;
+#[cfg(not(target_os = "windows"))]
+use std::io::Write;
 
 #[cfg(not(target_os = "windows"))]
 use crate::core::TerminalCell;
@@ -62,10 +64,16 @@ pub enum Mode {
 /// the mode.
 pub fn parse_args() -> Mode {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    if args.is_empty() {
+    
+    // Filter out our OpenRGB arguments so they don't trigger the usage/error parser
+    let filtered_args: Vec<String> = args.into_iter()
+        .filter(|arg| arg != "--enable-openrgb" && arg != "/rgb")
+        .collect();
+
+    if filtered_args.is_empty() {
         return Mode::ShowUsage;
     }
-    for arg in &args {
+    for arg in &filtered_args {
         let lower = arg.to_lowercase();
         if lower == "/s" || lower == "-s" {
             return Mode::Run;
@@ -98,6 +106,9 @@ pub fn print_usage(name: &str) {
     eprintln!("Usage (Linux / other):");
     eprintln!("  {name}                  — run fullscreen in the current terminal");
     eprintln!("  {name} -h | --help      — this help");
+    eprintln!();
+    eprintln!("Options:");
+    eprintln!("  --enable-openrgb | /rgb — enable keyboard/device RGB lighting controls via OpenRGB");
 }
 
 /// Run the screensaver with the given effect. Picks the platform

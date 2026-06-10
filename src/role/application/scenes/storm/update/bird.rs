@@ -1,5 +1,5 @@
-use super::effect::Pour;
-use super::types::{BirdState, Splash};
+use super::Pour;
+use super::super::types::{BirdState, Splash};
 
 impl Pour {
     pub fn update_bird(&mut self, delta: f32, cols: usize, rows: usize) {
@@ -136,3 +136,5 @@ impl Pour {
         }
     }
 }
+
+

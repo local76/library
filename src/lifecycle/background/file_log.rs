@@ -59,6 +59,7 @@ pub fn get_appdata_log_path() -> Option<PathBuf> {
     {
         std::env::var("APPDATA").ok().map(|appdata| {
             std::path::PathBuf::from(appdata)
+                .join("local76")
                 .join(get_log_app_name())
                 .join("log.txt")
         })
@@ -73,7 +74,7 @@ pub fn get_appdata_log_path() -> Option<PathBuf> {
                     PathBuf::from(home).join(".local").join("share")
                 })
             });
-        base.map(|b| b.join(get_log_app_name()).join("log.txt"))
+        base.map(|b| b.join("local76").join(get_log_app_name()).join("log.txt"))
     }
 }
 

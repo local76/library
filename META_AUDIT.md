@@ -1,8 +1,24 @@
 # library Consolidation Audit (post 4.2.0)
 
-**Date**: 2026-06-08
+**Date**: 2026-06-08 (initial), 2026-06-09 (icon-pipeline follow-up)
 **Auditor**: Crush (sub-agent) + human follow-up
 **Scope**: Top-level `C:/Users/jeryd/Synology/Home/Projects/local76` (helm, trance, pulse, ignite, template, scout, hub, library, screensavers)
+
+## 2026-06-09 follow-up: icon-pipeline migration
+
+- **Item 11** (icon pipeline) — every local76 tool's `build.rs` was using
+  `winres 0.1.x` to embed its `app.ico`. The `winres` ICO parser mangles
+  PNG-compressed multi-size entries, so the 32/48/256 sizes in the source
+  ICO end up corrupted in the built `.exe`/`.scr`. Windows Explorer
+  falls back to a generic console icon as a result. **Fix:** added the
+  new `library::build_resources` module (with `DEFAULT_PRODUCT_NAME` /
+  `DEFAULT_COMPANY_NAME` / `DEFAULT_LEGAL_COPYRIGHT` constants and a
+  `prepare_icon()` helper that emits `cargo:rerun-if-changed`) and
+  updated `docs/VISUAL_STANDARDS.md` § C to recommend Microsoft's
+  `embed-resource` 2.x crate in every consuming `build.rs`. Added
+  `docs/ICON_TROUBLESHOOTING.md` with the ICONDIR verifier recipe, and
+  added `toolkit/scripts/verify-icon.ps1` / `migrate-winres.ps1` to
+  make the migration idempotent.
 
 ## Summary
 

@@ -2,7 +2,7 @@ use std::time::Duration;
 use crate::core::screensaver::Screensaver;
 use crate::core::{hsl_to_rgb, rgb_to_hsl, LcgRng, TerminalCell};
 use crate::role::application::palette::query_current_palette;
-use crate::role::application::rgb::RgbController;
+use crate::role::application::rgb::{RgbController, is_openrgb_enabled};
 use crate::role::application::rgb::protocol::RgbColor;
 use super::types::{Firefly, Attractor, Star, KillSpark};
 
@@ -20,6 +20,12 @@ pub struct Fireflies {
     rgb_timer: f32,
 }
 
+impl Default for Fireflies {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Fireflies {
     pub fn new() -> Self {
         let rng = LcgRng::new(1357);
@@ -33,7 +39,7 @@ impl Fireflies {
             last_cols: 0,
             last_rows: 0,
             logo_excitation: Vec::new(),
-            rgb: Some(RgbController::new()),
+            rgb: if is_openrgb_enabled() { Some(RgbController::new()) } else { None },
             rgb_timer: 0.0,
         }
     }

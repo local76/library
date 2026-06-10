@@ -1,6 +1,6 @@
 use crate::core::TerminalCell;
-use super::effect::LifeEffect;
-use super::types::to_screen;
+use super::super::update::LifeEffect;
+use super::super::types::to_screen;
 
 pub fn draw_particles_and_trails(
     effect: &LifeEffect,

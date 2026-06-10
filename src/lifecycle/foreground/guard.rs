@@ -6,7 +6,7 @@
 type MutexHandle = windows_sys::Win32::Foundation::HANDLE;
 
 #[cfg(target_os = "linux")]
-extern "C" {
+unsafe extern "C" {
     fn flock(fd: std::os::raw::c_int, operation: std::os::raw::c_int) -> std::os::raw::c_int;
 }
 

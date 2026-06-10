@@ -1,5 +1,5 @@
-use super::effect::LifeEffect;
-use super::types::{Particle, to_screen};
+use super::LifeEffect;
+use super::super::types::{Particle, to_screen};
 
 pub fn update_singularity(eff: &mut LifeEffect, delta: f32, cols: usize, rows: usize) {
     let cols_f = cols as f32;
@@ -191,3 +191,4 @@ pub fn update_collapse(eff: &mut LifeEffect, delta: f32, cols: usize, rows: usiz
         }
     }
 }
+

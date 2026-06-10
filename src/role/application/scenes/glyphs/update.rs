@@ -2,22 +2,15 @@ use std::time::Duration;
 use crate::core::screensaver::Screensaver;
 use crate::core::{LcgRng, TerminalCell};
 use crate::platform::native::sys_info::get_system_info;
-use crate::role::application::palette::query_current_palette;
-use crate::role::application::rgb::RgbController;
+use crate::role::application::rgb::{RgbController, is_openrgb_enabled};
 use crate::role::application::rgb::protocol::RgbColor;
 
-struct RainDrop {
-    x: f32,
-    y: f32,
-    speed: f32,
-    length: usize,
-    char_rot: usize,
-}
+use super::types::RainDrop;
 
 pub struct Matrix {
     rng: LcgRng,
-    drops: Vec<RainDrop>,
-    char_pool: Vec<char>,
+    pub(super) drops: Vec<RainDrop>,
+    pub(super) char_pool: Vec<char>,
     last_cols: usize,
     last_rows: usize,
     density_opt: u32,
@@ -25,10 +18,16 @@ pub struct Matrix {
     // Live system dynamics + data rain
     sys_refresh_timer: f32,
     mem_pressure: f32,
-    live_system_chars: Vec<char>,
+    pub(super) live_system_chars: Vec<char>,
     rgb: Option<RgbController>,
     rgb_timer: f32,
     time_elapsed: f32,
+}
+
+impl Default for Matrix {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Matrix {
@@ -64,7 +63,7 @@ impl Matrix {
             sys_refresh_timer: 0.0,
             mem_pressure: sys.mem_used_pct / 100.0,
             live_system_chars,
-            rgb: Some(RgbController::new()),
+            rgb: if is_openrgb_enabled() { Some(RgbController::new()) } else { None },
             rgb_timer: 0.0,
             time_elapsed: 0.0,
         }
@@ -135,40 +134,6 @@ impl Screensaver for Matrix {
     }
 
     fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
-        // library 4.0: pull the canonical accent color from ScreenPalette.
-        let accent = query_current_palette().accent;
-
-        for d in self.drops.iter() {
-            let x = d.x as i32;
-            if x < 0 || x as usize >= cols {
-                continue;
-            }
-            for k in 0..d.length {
-                let y = d.y as i32 - k as i32;
-                if y < 0 || y as usize >= rows {
-                    continue;
-                }
-                let idx = (y as usize) * cols + x as usize;
-                if idx >= grid.len() {
-                    break;
-                }
-                let pool = if !self.live_system_chars.is_empty() && k == 0 {
-                    &self.live_system_chars
-                } else {
-                    &self.char_pool
-                };
-                let ch = pool[(d.char_rot + k) % pool.len().max(1)];
-                let intensity = 1.0 - (k as f32 / d.length as f32);
-                let g = ((accent.1 as f32) * (0.4 + 0.6 * intensity)) as u8;
-                let b = ((accent.2 as f32) * (0.4 + 0.6 * intensity)) as u8;
-                let r = ((accent.0 as f32) * (0.4 + 0.6 * intensity)) as u8;
-                grid[idx] = TerminalCell {
-                    ch,
-                    fg: (r, g, b),
-                    bg: (0, 0, 0),
-                    bold: k == 0,
-                };
-            }
-        }
+        self.draw_impl(grid, cols, rows);
     }
 }

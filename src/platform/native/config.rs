@@ -26,6 +26,7 @@ impl<T: ConfigFields> AppConfig<T> {
         {
             std::env::var("APPDATA").ok().map(|appdata| {
                 std::path::PathBuf::from(appdata)
+                    .join("local76")
                     .join(app_name)
                     .join(filename)
             })
@@ -40,7 +41,7 @@ impl<T: ConfigFields> AppConfig<T> {
                         PathBuf::from(home).join(".config")
                     })
                 });
-            base.map(|b| b.join(app_name).join(filename))
+            base.map(|b| b.join("local76").join(app_name).join(filename))
         }
     }
 
@@ -96,6 +97,6 @@ impl<T: ConfigFields> AppConfig<T> {
             content.push_str(&format!("{}: {}\n", k, v));
         }
 
-        std::fs::write(path, content)
+        crate::write_file_atomic(path, content)
     }
 }

@@ -4,10 +4,10 @@ use crate::core::logo_block::render_logo_block;
 use crate::platform::native::sys_info::get_system_info;
 use crate::role::application::palette::query_current_palette;
 use crate::role::application::rgb::protocol::RgbColor;
-use super::effect::LifeEffect;
-use super::types::{UniverseState, Particle, GravityCenter, LogoPixel};
-use super::update_expansion;
-use super::update_collapse;
+use super::LifeEffect;
+use super::super::types::{UniverseState, Particle, GravityCenter, LogoPixel};
+use super::expansion as update_expansion;
+use super::collapse as update_collapse;
 
 pub fn enter_state(eff: &mut LifeEffect, cols: usize, rows: usize) {
     let cols_f = cols as f32;
@@ -501,3 +501,4 @@ pub fn update_life(eff: &mut LifeEffect, dt: Duration, cols: usize, rows: usize)
         }
     }
 }
+

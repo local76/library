@@ -1,6 +1,6 @@
 mod audio;
 mod drawing;
-mod effect;
+mod update;
 mod types;
 
-pub use effect::Party;
+pub use update::Party;

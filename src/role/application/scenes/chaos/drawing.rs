@@ -1,6 +1,6 @@
 use crate::core::TerminalCell;
 use crate::role::application::palette::query_current_palette;
-use super::effect::Unstable;
+use super::update::Unstable;
 use super::types::{Phase, ExplosionType};
 
 impl Unstable {

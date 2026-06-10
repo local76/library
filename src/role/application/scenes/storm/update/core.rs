@@ -1,7 +1,7 @@
 use crate::core::logo_block::render_logo_block;
 use crate::platform::native::sys_info::get_system_info;
-use super::effect::Pour;
-use super::types::{LogoCell, Drop, Splash, Phase, BirdState};
+use super::Pour;
+use super::super::types::{LogoCell, Drop, Splash, Phase, BirdState};
 
 impl Pour {
     pub fn check_resize(&mut self, cols: usize, rows: usize) {
@@ -280,3 +280,5 @@ impl Pour {
         }
     }
 }
+
+

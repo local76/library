@@ -1,6 +1,5 @@
 mod drawing;
-mod effect;
 mod types;
-mod update_core;
+mod update;
 
-pub use effect::Unstable;
+pub use update::Unstable;

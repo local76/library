@@ -2,11 +2,14 @@ use std::time::Duration;
 use crate::core::screensaver::Screensaver;
 use crate::core::{LcgRng, TerminalCell};
 use crate::platform::native::sys_info::get_system_info;
-use crate::role::application::rgb::RgbController;
+use crate::role::application::rgb::{RgbController, is_openrgb_enabled};
 
 use super::types::{UniverseState, Particle, GravityCenter, LogoPixel};
-use super::drawing::draw_life;
-use super::update_core::update_life;
+
+pub mod core;
+pub mod expansion;
+pub mod collapse;
+pub mod accretion_helpers;
 
 pub struct LifeEffect {
     pub(crate) rng: LcgRng,
@@ -38,6 +41,12 @@ pub struct LifeEffect {
     pub(crate) rgb: Option<RgbController>,
     pub(crate) rgb_timer: f32,
     pub(crate) last_state: Option<UniverseState>,
+}
+
+impl Default for LifeEffect {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LifeEffect {
@@ -73,7 +82,7 @@ impl LifeEffect {
             grav_wave_timer: 0.0,
             grav_wave_cx: 0.0,
             grav_wave_cy: 0.0,
-            rgb: Some(RgbController::new()),
+            rgb: if is_openrgb_enabled() { Some(RgbController::new()) } else { None },
             rgb_timer: 0.0,
             last_state: None,
         }
@@ -82,10 +91,10 @@ impl LifeEffect {
 
 impl Screensaver for LifeEffect {
     fn update(&mut self, dt: Duration, cols: usize, rows: usize) {
-        update_life(self, dt, cols, rows);
+        self::core::update_life(self, dt, cols, rows);
     }
 
     fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
-        draw_life(self, grid, cols, rows);
+        super::drawing::draw_life(self, grid, cols, rows);
     }
 }

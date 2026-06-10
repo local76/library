@@ -1,7 +1,7 @@
 use std::time::Duration;
 use crate::role::application::rgb::protocol::RgbColor;
-use super::effect::Pour;
-use super::types::{LogoCell, Splash, BirdState, AnimalType, AnimalState};
+use super::Pour;
+use super::super::types::{LogoCell, Splash, BirdState, AnimalType, AnimalState};
 
 impl Pour {
     pub fn update_lightning(&mut self, delta: f32, cols: usize, rows: usize) {
@@ -184,3 +184,5 @@ impl Pour {
         }
     }
 }
+
+

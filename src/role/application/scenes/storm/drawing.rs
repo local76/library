@@ -1,6 +1,6 @@
 use crate::core::TerminalCell;
 use crate::role::application::palette::query_current_palette;
-use super::effect::Pour;
+use super::update::Pour;
 use super::types::{BirdState, AnimalType};
 
 impl Pour {

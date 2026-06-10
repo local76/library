@@ -1,5 +1,5 @@
-use super::effect::Unstable;
-use super::types::{Phase, ExplosionType};
+use super::Unstable;
+use super::super::types::{Phase, ExplosionType};
 
 impl Unstable {
     pub fn update_assembled(&mut self, delta: f32) {

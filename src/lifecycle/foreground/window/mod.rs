@@ -17,7 +17,7 @@ pub use position::{
 };
 #[allow(deprecated)] // Intentional: Re-exporting legacy relaunch helpers for backward compatibility with older apps
 pub use relaunch::{relaunch_in_conhost_if_needed, should_relaunch_in_conhost, relaunch_in_conhost};
-pub use visibility::{hide_console_at_startup, is_console_focused};
+pub use visibility::{hide_console_at_startup, is_console_focused, show_console_window};
 pub use style::{BorderlessConsole, ConsoleTitleGuard};
 
 // Re-export SingleInstanceGuard from guard module to preserve API compatibility

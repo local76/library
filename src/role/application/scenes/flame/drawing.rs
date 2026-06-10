@@ -1,6 +1,6 @@
 use crate::core::TerminalCell;
 use crate::role::application::palette::query_current_palette;
-use super::effect::FireEffect;
+use super::update::FireEffect;
 
 pub fn draw_fire(effect: &FireEffect, grid: &mut [TerminalCell], cols: usize, rows: usize) {
     const CHARS: &[char] = &[

@@ -1,5 +1,5 @@
 use crate::core::TerminalCell;
-use super::animation::BhopDashboard;
+use super::update::BhopDashboard;
 use super::types::{BhopState, CommandState, COMMANDS};
 
 #[allow(clippy::too_many_arguments)]
@@ -350,10 +350,10 @@ pub fn draw_dashboard(db: &BhopDashboard, grid: &mut [TerminalCell], cols: usize
     let scenery_y = floor_y - 4;
     let scenery_offset = ((db.elapsed * 10.0) as usize) % bhop_w_content.max(1);
     for i in 0..bhop_w_content {
-        if (i + scenery_offset).is_multiple_of(15) {
+        if (i + scenery_offset) % 15 == 0 {
             set_cell_helper(grid, cols, rows, bhop_start_x + i, scenery_y, '.', (60, 60, 75), false);
         }
-        if (i + scenery_offset + 5).is_multiple_of(25) {
+        if (i + scenery_offset + 5) % 25 == 0 {
             set_cell_helper(grid, cols, rows, bhop_start_x + i, scenery_y - 2, '*', (40, 40, 50), false);
         }
     }

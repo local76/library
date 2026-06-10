@@ -5,6 +5,51 @@
 //! Encapsulates the ~25-line raw-mode + alt-screen + size + borderless dance that
 //! starts every r* TUI's `main()`. Returns a `Terminal` ready for rendering.
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static APP_SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
+
+/// Signal that the TUI application is shutting down.
+pub fn set_app_shutting_down(val: bool) {
+    APP_SHUTTING_DOWN.store(val, Ordering::Relaxed);
+}
+
+/// Check if the application is shutting down (for background threads).
+pub fn is_app_shutting_down() -> bool {
+    APP_SHUTTING_DOWN.load(Ordering::Relaxed)
+}
+
+#[cfg(all(target_os = "windows", feature = "widgets"))]
+unsafe extern "system" fn tui_ctrl_handler(ctrl_type: u32) -> windows_sys::Win32::Foundation::BOOL {
+    use windows_sys::Win32::Foundation::FALSE;
+    use windows_sys::Win32::System::Console::{
+        CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT, CTRL_LOGOFF_EVENT, CTRL_SHUTDOWN_EVENT
+    };
+
+    match ctrl_type {
+        CTRL_C_EVENT | CTRL_BREAK_EVENT | CTRL_CLOSE_EVENT | CTRL_LOGOFF_EVENT | CTRL_SHUTDOWN_EVENT => {
+            // Signal background threads to stop
+            set_app_shutting_down(true);
+
+            // Clear notifications
+            #[cfg(feature = "notification")]
+            crate::lifecycle::background::notification::clear_my_toast_notifications();
+
+            // Restore terminal state
+            let _ = crossterm::terminal::disable_raw_mode();
+            let _ = crossterm::execute!(
+                std::io::stdout(),
+                crossterm::terminal::LeaveAlternateScreen,
+                crossterm::event::DisableMouseCapture
+            );
+
+            // Return FALSE so the default handler still terminates the process.
+            FALSE
+        }
+        _ => FALSE,
+    }
+}
+
 #[cfg(feature = "widgets")]
 mod imp {
     use std::io;
@@ -96,6 +141,16 @@ mod imp {
     pub fn bootstrap_tui(
         config: TuiBootstrapConfig,
     ) -> io::Result<(Terminal<CrosstermBackend<io::Stdout>>, TuiGuards)> {
+        super::set_app_shutting_down(false);
+
+        #[cfg(target_os = "windows")]
+        unsafe {
+            let _ = windows_sys::Win32::System::Console::SetConsoleCtrlHandler(
+                Some(super::tui_ctrl_handler),
+                windows_sys::Win32::Foundation::TRUE,
+            );
+        }
+
         if config.install_panic_hook {
             set_tui_panic_hook();
         }
@@ -149,6 +204,11 @@ mod imp {
     pub fn shutdown_tui(
         terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     ) -> io::Result<()> {
+        super::set_app_shutting_down(true);
+
+        #[cfg(feature = "notification")]
+        crate::lifecycle::background::notification::clear_my_toast_notifications();
+
         disable_raw_mode()?;
         execute!(
             terminal.backend_mut(),

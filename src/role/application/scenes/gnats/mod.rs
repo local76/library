@@ -1,5 +1,5 @@
 mod drawing;
-mod effect;
+mod update;
 mod types;
 
-pub use effect::Fireflies;
+pub use update::Fireflies;

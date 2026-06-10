@@ -3,8 +3,10 @@ use crate::core::screensaver::Screensaver;
 use crate::core::{LcgRng, TerminalCell};
 use crate::core::logo_block::render_logo_block;
 use crate::platform::native::sys_info::get_system_info;
-use crate::role::application::rgb::RgbController;
+use crate::role::application::rgb::{RgbController, is_openrgb_enabled};
 use super::types::{Particle, Star, Phase, ExplosionType};
+
+mod core;
 
 pub struct Unstable {
     pub(crate) rng: LcgRng,
@@ -28,6 +30,12 @@ pub struct Unstable {
     pub(crate) rgb_timer: f32,
     pub(crate) last_phase: Option<Phase>,
     pub(crate) time_elapsed: f32,
+}
+
+impl Default for Unstable {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Unstable {
@@ -56,7 +64,7 @@ impl Unstable {
             mem_pressure: sys.mem_used_pct / 100.0,
             cpu_load: 0.4,
             host_bias,
-            rgb: Some(RgbController::new()),
+            rgb: if is_openrgb_enabled() { Some(RgbController::new()) } else { None },
             rgb_timer: 0.0,
             last_phase: None,
             time_elapsed: 0.0,

@@ -1,5 +1,5 @@
-mod animation;
+mod update;
 mod drawing;
 mod types;
 
-pub use animation::BhopDashboard;
+pub use update::BhopDashboard;

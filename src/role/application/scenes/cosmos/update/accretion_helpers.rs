@@ -1,6 +1,6 @@
 use crate::role::application::palette::query_current_palette;
-use super::effect::LifeEffect;
-use super::types::{Particle, GravityCenter, to_screen};
+use super::LifeEffect;
+use super::super::types::{Particle, GravityCenter, to_screen};
 
 pub fn handle_seed_merges(eff: &mut LifeEffect, _delta: f32, _dir: f32, seeds_len: usize) {
     let mut spawn_sparks = Vec::new();

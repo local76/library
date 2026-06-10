@@ -40,7 +40,7 @@ pub use file_log::{
     set_event_source,
 };
 #[cfg(feature = "notification")]
-pub use notification::{show_toast_notification, show_toast_notification_with_id};
+pub use notification::{show_toast_notification, show_toast_notification_with_id, clear_toast_notifications, clear_my_toast_notifications};
 #[cfg(feature = "clipboard")]
 pub use clipboard::copy_text_to_clipboard;
 #[allow(deprecated)] // Intentional: Re-exporting legacy priority helpers (set_low_priority, set_idle_priority) for backward compatibility with older apps

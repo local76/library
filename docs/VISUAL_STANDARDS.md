@@ -72,7 +72,7 @@ To ensure the icons render crisp and sharp at all operating system scales (from 
 
 ### C. Windows Explorer resource metadata
 
-To ensure the applications look polished in Windows Explorer (e.g. when right-clicking the binary and viewing **Properties → Details**), every utility must compile the following PE metadata into its resources using a build script (`build.rs`) and the `winres` crate:
+To ensure the applications look polished in Windows Explorer (e.g. when right-clicking the binary and viewing **Properties → Details**), every utility must compile the following PE metadata into its resources using a build script (`build.rs`) and the **`embed-resource` 2.x** crate:
 
 - **File Description**. A clean, descriptive name of the utility (e.g., `helm - System Info Utility`).
 - **Product Name**. Grouped under the suite name: `local76 Suite`.
@@ -80,28 +80,48 @@ To ensure the applications look polished in Windows Explorer (e.g. when right-cl
 - **Legal Copyright**. Set as `Copyright © 2026 local76`.
 - **Version Information**. Automatically synchronizes the file and product versions with the crate's `Cargo.toml` version.
 
+> **Migration note (2026-06-09):** the historical `winres 0.1` template has been
+> deprecated. The `winres 0.1.x` parser mangles PNG-compressed multi-size ICOs,
+> which causes Windows Explorer to fall back to a generic console icon. The new
+> template below uses Microsoft's `embed-resource` 2.x crate, which correctly
+> preserves all four ICO sizes. The brand defaults
+> (`local76 Suite` / `local76` / `Copyright © 2026 local76`) are exposed via
+> `library::build_resources::{DEFAULT_PRODUCT_NAME, DEFAULT_COMPANY_NAME, DEFAULT_LEGAL_COPYRIGHT}`
+> so they live in one place. See `ICON_TROUBLESHOOTING.md` for the ICONDIR
+> verification recipe used to catch regressions.
+
 #### Standard `build.rs` template
 
+In the consuming crate's `Cargo.toml`:
+
+```toml
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "2"
+```
+
+In its `build.rs`:
+
 ```rust
-use std::path::Path;
+use library::build_resources::{
+    DEFAULT_COMPANY_NAME, DEFAULT_LEGAL_COPYRIGHT, DEFAULT_PRODUCT_NAME, prepare_icon,
+};
 
 fn main() {
-    // Re-run the build script if the icon changes
-    println!("cargo:rerun-if-changed=assets/brand/app.ico");
-    let ico_path = Path::new("assets/brand/app.ico");
-
-    let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
-    if target_os == "windows" && ico_path.exists() {
-        let mut res = winres::WindowsResource::new();
-        res.set_icon("assets/brand/app.ico");
-        res.set("FileDescription", "helm - System Info Utility");
-        res.set("ProductName", "local76 Suite");
-        res.set("CompanyName", "local76");
-        res.set("LegalCopyright", "Copyright © 2026 local76");
-        res.compile().expect("failed to compile winres resource");
+    if let Some((icon_path, meta)) = prepare_icon("assets/brand/app.ico") {
+        let mut rc = embed_resource::new();
+        rc.set_icon(&icon_path);
+        rc.set("FileDescription", &meta.file_description);
+        rc.set("ProductName",     DEFAULT_PRODUCT_NAME);
+        rc.set("CompanyName",     DEFAULT_COMPANY_NAME);
+        rc.set("LegalCopyright",  DEFAULT_LEGAL_COPYRIGHT);
+        rc.compile().expect("failed to compile winres resource");
     }
 }
 ```
+
+> The exact `embed_resource::new()` / `set_icon` / `set` / `compile` calls
+> match the 2.x API. If a future 3.x release renames the entry point, only
+> the call site changes — `library::build_resources` does not need an update.
 
 ---
 

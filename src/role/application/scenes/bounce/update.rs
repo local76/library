@@ -5,7 +5,7 @@ use crate::core::logo_block::render_logo_block;
 use crate::lifecycle::foreground::identity;
 use crate::platform::native::sys_info::get_system_info;
 use crate::role::application::palette::query_current_palette;
-use crate::role::application::rgb::RgbController;
+use crate::role::application::rgb::{RgbController, is_openrgb_enabled};
 use crate::role::application::rgb::protocol::RgbColor;
 
 use super::types::{BhopState, CommandState, LcgRng, COMMANDS};
@@ -61,6 +61,12 @@ pub struct BhopDashboard {
     pub(crate) rng: LcgRng,
     pub rgb: Option<RgbController>,
     pub last_rgb_color: Option<RgbColor>,
+}
+
+impl Default for BhopDashboard {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl BhopDashboard {
@@ -142,7 +148,7 @@ impl BhopDashboard {
 
             elapsed: 0.0,
             rng: LcgRng::new(9876),
-            rgb: Some(RgbController::new()),
+            rgb: if is_openrgb_enabled() { Some(RgbController::new()) } else { None },
             last_rgb_color: None,
         }
     }

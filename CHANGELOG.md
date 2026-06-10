@@ -13,8 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Test gate**: `tests/screensaver_runtime_facade.rs` is now `[[test]] required-features = ["screensaver-runtime"]`, so `cargo test --release` in the library no longer fails to find the runtime.
+- **Linux compilation**: Fixed cross-compilation errors for Linux targets in `screensaver_runtime`, `guard.rs`, `daemon.rs`, and `sys_info/linux.rs` by bringing `Write` into scope, ensuring correct `libc` dependency configuration under features, updating to `unsafe extern` blocks for Rust 2024 edition compliance, and adding explicit type annotations to resolve compiler E0282.
 
 ### Changed
+- **Screensaver structural alignment**: Standardized all 10 visual screensaver scenes into a clean **4-File Blueprint** (`mod.rs`, `types.rs`, `update.rs`/`update/`, `drawing.rs`/`drawing/`), resolving private visibility boundaries and splitting monolithic drawing/update logics into submodules where necessary.
 - `ARCHITECTURE.md` rewritten in the new register: 4-layer taxonomy, design system, 10-scene matrix, migration cheatsheet, consumers.
 - `docs/DESIGN_SYSTEM.md`, `docs/EMBEDDED_DOCS.md`, `docs/VISUAL_STANDARDS.md` rewritten in the new register. The monograms in the visual-standards doc are now `hl`/`pl`/`sc`/`tr`/`ig` (lowercase app initials).
 - Drop the legacy "r*" and "Local freedom" branding throughout.

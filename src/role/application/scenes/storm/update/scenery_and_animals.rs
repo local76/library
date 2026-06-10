@@ -1,5 +1,5 @@
-use super::effect::Pour;
-use super::types::{Animal, AnimalType, AnimalState};
+use super::Pour;
+use super::super::types::{Animal, AnimalType, AnimalState};
 
 impl Pour {
     pub fn update_scenery_and_animals(&mut self, delta: f32, cols: usize, rows: usize) {
@@ -119,3 +119,5 @@ impl Pour {
         }
     }
 }
+
+

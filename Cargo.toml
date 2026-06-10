@@ -87,7 +87,7 @@ scenes = []
 # The 5 TUI apps and other library consumers that don't need to
 # host a screensaver process do not enable it. Default-off because it
 # pulls in `libc` on non-Windows and the Win32 GDI stack on Windows.
-screensaver-runtime = ["scenes", "platform-native", "role-application", "lifecycle-foreground"]
+screensaver-runtime = ["scenes", "platform-native", "role-application", "lifecycle-foreground", "dep:libc"]
 
 # Granular / legacy (kept for compatibility with existing consumers)
 gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]

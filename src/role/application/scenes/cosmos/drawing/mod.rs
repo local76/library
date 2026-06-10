@@ -1,8 +1,10 @@
 use crate::core::TerminalCell;
 use crate::role::application::palette::query_current_palette;
-use super::effect::LifeEffect;
+use super::LifeEffect;
 use super::types::{UniverseState, to_screen};
-use super::draw_particles::draw_particles_and_trails;
+use self::draw_particles::draw_particles_and_trails;
+
+mod draw_particles;
 
 pub fn draw_life(effect: &LifeEffect, grid: &mut [TerminalCell], cols: usize, rows: usize) {
     if cols == 0 || rows == 0 {

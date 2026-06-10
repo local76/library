@@ -17,6 +17,8 @@ pub mod console;
 pub mod identity;
 #[cfg(all(feature = "window", feature = "widgets"))]
 pub mod tui_bootstrap;
+#[cfg(all(feature = "window", feature = "widgets"))]
+pub use tui_bootstrap::{is_app_shutting_down, set_app_shutting_down};
 pub mod power_sync;
 pub mod panic;
 pub use panic::set_tui_panic_hook;

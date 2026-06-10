@@ -4,7 +4,7 @@ use crate::core::{LcgRng, TerminalCell};
 use crate::core::logo_block::render_logo_block;
 use crate::platform::native::sys_info::get_system_info;
 use crate::role::application::palette::query_current_palette;
-use crate::role::application::rgb::RgbController;
+use crate::role::application::rgb::{RgbController, is_openrgb_enabled};
 use crate::role::application::rgb::protocol::RgbColor;
 
 use super::types::{Spark, LogoCell, Star, VolcanicGlob, get_palette};
@@ -31,6 +31,12 @@ pub struct FireEffect {
     pub(crate) cpu_load: f32,
     pub(crate) host_bias: f32,
     pub(crate) rgb: Option<RgbController>,
+}
+
+impl Default for FireEffect {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl FireEffect {
@@ -71,7 +77,7 @@ impl FireEffect {
             mem_pressure,
             cpu_load,
             host_bias,
-            rgb: Some(RgbController::new()),
+            rgb: if is_openrgb_enabled() { Some(RgbController::new()) } else { None },
         }
     }
 

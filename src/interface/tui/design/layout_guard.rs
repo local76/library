@@ -13,6 +13,8 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph},
 };
 
+use super::layout::centered_rect;
+
 /// Renders a centered "Terminal too small" warning. Returns early after drawing so
 /// the caller can `return;` from its `draw_ui` closure.
 #[allow(clippy::too_many_arguments)]
@@ -59,27 +61,6 @@ pub fn render_too_small_warning(
 /// Returns true if the given area is below the minimum required size.
 pub fn is_too_small(area: Rect, min: (u16, u16)) -> bool {
     area.width < min.0 || area.height < min.1
-}
-
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    use ratatui::layout::{Constraint, Direction, Layout};
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage((100 - percent_y) / 2),
-            Constraint::Percentage(percent_y),
-            Constraint::Percentage((100 - percent_y) / 2),
-        ])
-        .split(r);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage((100 - percent_x) / 2),
-            Constraint::Percentage(percent_x),
-            Constraint::Percentage((100 - percent_x) / 2),
-        ])
-        .split(popup_layout[1])[1]
 }
 
 #[cfg(test)]

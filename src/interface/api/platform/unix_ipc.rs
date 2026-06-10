@@ -26,7 +26,7 @@ impl UnixIpcServer {
         F: Fn(&str) -> String,
     {
         let (mut stream, _) = self.listener.accept()?;
-        let mut buffer = [0u8; 1024];
+        let mut buffer = [0u8; 65536];
         let n = stream.read(&mut buffer)?;
         if n > 0 {
             let req_str = String::from_utf8_lossy(&buffer[..n]);
@@ -56,7 +56,7 @@ impl UnixIpcClient {
 
     pub fn send_request(&mut self, msg: &str) -> Result<String, Error> {
         self.stream.write_all(msg.as_bytes())?;
-        let mut buffer = [0u8; 1024];
+        let mut buffer = [0u8; 65536];
         let n = self.stream.read(&mut buffer)?;
         let resp_str = String::from_utf8_lossy(&buffer[..n]).into_owned();
         Ok(resp_str)

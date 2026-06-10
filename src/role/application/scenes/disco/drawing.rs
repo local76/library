@@ -1,7 +1,7 @@
 use crate::core::{LcgRng, TerminalCell};
 use crate::core::logo_block::render_logo_block;
 use crate::platform::native::sys_info::get_system_info;
-use super::effect::Party;
+use super::update::Party;
 use super::types::NEON_COLORS;
 
 impl Party {

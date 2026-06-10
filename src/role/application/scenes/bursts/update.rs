@@ -2,7 +2,7 @@ use std::time::Duration;
 use crate::core::screensaver::Screensaver;
 use crate::core::{LcgRng, TerminalCell};
 use crate::platform::native::sys_info::get_system_info;
-use crate::role::application::rgb::RgbController;
+use crate::role::application::rgb::{RgbController, is_openrgb_enabled};
 use crate::role::application::rgb::protocol::RgbColor;
 use super::types::{Rocket, Particle, Star, FIREWORK_COLORS};
 
@@ -25,6 +25,12 @@ pub struct Fireworks {
     cpu_load: f32,
     host_bias: f32,
     rgb: Option<RgbController>,
+}
+
+impl Default for Fireworks {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Fireworks {
@@ -53,7 +59,7 @@ impl Fireworks {
             mem_pressure: sys.mem_used_pct / 100.0,
             cpu_load: 0.4,
             host_bias,
-            rgb: Some(RgbController::new()),
+            rgb: if is_openrgb_enabled() { Some(RgbController::new()) } else { None },
         }
     }
 

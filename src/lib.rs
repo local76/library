@@ -36,6 +36,13 @@
 pub mod core;
 pub mod error;
 
+// Build-time helpers (build-script companion — see module docs).
+// Consuming crates call `library::build_resources::prepare_icon(...)` from
+// their own `build.rs`; the actual `embed-resource` invocation lives in
+// the consumer's build script so the library does not need to take a
+// build-dep on `embed-resource`.
+pub mod build_resources;
+
 pub use error::{LibraryError, Result as LibraryResult};
 #[cfg(feature = "effects")]
 pub use interface::tui::screensaver::{Screensaver, ScreensaverRenderer};
@@ -117,9 +124,11 @@ pub mod screensaver_runtime;
 
 // Lifecycle foreground additions (advanced console helpers and window)
 pub use lifecycle::foreground::set_tui_panic_hook;
+#[cfg(all(feature = "window", feature = "widgets"))]
+pub use lifecycle::foreground::tui_bootstrap::{is_app_shutting_down, set_app_shutting_down};
 
 #[cfg(feature = "window")]
-pub use lifecycle::foreground::window::hide_console_at_startup;
+pub use lifecycle::foreground::window::{hide_console_at_startup, show_console_window};
 #[cfg(feature = "window")]
 #[allow(deprecated)] // Intentional: Re-exporting legacy conhost relaunch helpers for backward compatibility with older apps
 pub use lifecycle::foreground::window::{
@@ -138,7 +147,7 @@ pub use lifecycle::foreground::console::{
 };
 
 // Core enhancements
-pub use core::{SystemInfo, hsl_to_rgb, rgb_to_hsl};
+pub use core::{SystemInfo, hsl_to_rgb, rgb_to_hsl, write_file_atomic};
 pub use platform::native::sys_info::get_system_info;
 
 // GPU compute enhancements
