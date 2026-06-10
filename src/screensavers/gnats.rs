@@ -1,4 +1,4 @@
-﻿//! Consolidated gnats screensaver effect module.
+//! Consolidated gnats screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

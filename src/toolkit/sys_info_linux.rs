@@ -1,4 +1,4 @@
-﻿use crate::toolkit::platform::{PowerStatus, SystemBiosInfo, DiskDriveInfo};
+use crate::toolkit::platform::{PowerStatus, SystemBiosInfo, DiskDriveInfo};
 
 pub fn get_system_screen_resolution() -> (i32, i32) {
     if let Ok(entries) = std::fs::read_dir("/sys/class/drm") {

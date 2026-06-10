@@ -1,4 +1,4 @@
-﻿//! Wireless network command stubs for non-Windows (nmcli-based Linux).
+//! Wireless network command stubs for non-Windows (nmcli-based Linux).
 //!
 //! **Taxonomy Classification**: Platform (WLAN / Stub).
 

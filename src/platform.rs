@@ -1,4 +1,4 @@
-﻿//! Backward compatibility shim for platform.
+//! Backward compatibility shim for platform.
 //! Re-exports from the new backend module.
 
 pub mod native {

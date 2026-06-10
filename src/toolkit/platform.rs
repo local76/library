@@ -1,4 +1,4 @@
-﻿//! Platform & Architecture (Deployment)
+//! Platform & Architecture (Deployment)
 //!
 //! **Taxonomy Classification**: Platform & Architecture (Deployment).
 //!

@@ -1,4 +1,4 @@
-﻿//! Consolidated bounce screensaver effect module.
+//! Consolidated bounce screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

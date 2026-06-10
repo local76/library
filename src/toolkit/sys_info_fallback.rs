@@ -1,4 +1,4 @@
-﻿//! Fallback stubs for native platform information queries when compiling without features.
+//! Fallback stubs for native platform information queries when compiling without features.
 //!
 //! **Taxonomy Classification**: Platform & Architecture (Deployment - Native) + Role (System Software).
 //!

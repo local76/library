@@ -1,4 +1,4 @@
-﻿//! One-shot TUI bootstrap: enable raw mode, alt screen, mouse capture, console sizing.
+//! One-shot TUI bootstrap: enable raw mode, alt screen, mouse capture, console sizing.
 //!
 //! **Taxonomy Classification**: Execution State (Lifecycle - Foreground).
 //!

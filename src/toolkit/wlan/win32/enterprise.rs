@@ -1,4 +1,4 @@
-﻿//! Windows WPA-Enterprise WiFi connection implementation.
+//! Windows WPA-Enterprise WiFi connection implementation.
 //!
 //! **Taxonomy Classification**: Platform (WLAN / Win32 Enterprise).
 

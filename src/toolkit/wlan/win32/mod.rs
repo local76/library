@@ -1,4 +1,4 @@
-﻿//! Windows-specific WiFi query implementations.
+//! Windows-specific WiFi query implementations.
 //!
 //! **Taxonomy Classification**: Platform (WLAN / Win32 Query).
 

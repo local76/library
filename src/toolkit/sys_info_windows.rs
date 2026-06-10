@@ -1,4 +1,4 @@
-﻿use crate::toolkit::platform::{PowerStatus, SystemBiosInfo, DiskDriveInfo};
+use crate::toolkit::platform::{PowerStatus, SystemBiosInfo, DiskDriveInfo};
 #[cfg(feature = "widgets")]
 use ratatui::style::Color;
 

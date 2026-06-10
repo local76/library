@@ -1,4 +1,4 @@
-﻿//! Consolidated flame screensaver effect module.
+//! Consolidated flame screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

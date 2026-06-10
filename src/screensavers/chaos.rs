@@ -1,4 +1,4 @@
-﻿//! Consolidated chaos screensaver effect module.
+//! Consolidated chaos screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

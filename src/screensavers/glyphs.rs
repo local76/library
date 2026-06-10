@@ -1,4 +1,4 @@
-﻿//! Consolidated glyphs screensaver effect module.
+//! Consolidated glyphs screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

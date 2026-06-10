@@ -1,4 +1,4 @@
-﻿//! Backward compatibility shim for interface.
+//! Backward compatibility shim for interface.
 //! Re-exports from the new ui and app modules.
 
 #[cfg(feature = "widgets")]

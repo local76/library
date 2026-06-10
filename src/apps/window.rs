@@ -1,4 +1,4 @@
-﻿//! Window and terminal management for foreground applications.
+//! Window and terminal management for foreground applications.
 //!
 //! **Taxonomy Classification**: Execution State (Lifecycle - Foreground) + Platform (Native).
 

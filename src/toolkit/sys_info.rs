@@ -1,4 +1,4 @@
-﻿//! Host system information and theme querying utilities.
+//! Host system information and theme querying utilities.
 //!
 //! **Taxonomy Classification**: Platform & Architecture (Deployment - Native) + Role (System Software).
 //! For taxonomy details, see [ARCHITECTURE.md](file:///C:/Users/jeryd/Synology/Home/Projects/local76/library/ARCHITECTURE.md).

@@ -1,4 +1,4 @@
-﻿//! Web (browser/WASM) platform stubs.
+//! Web (browser/WASM) platform stubs.
 //!
 //! **Taxonomy Classification**: Platform & Architecture (Deployment - Web).
 //!

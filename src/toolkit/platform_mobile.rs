@@ -1,4 +1,4 @@
-﻿//! Mobile platform stubs.
+//! Mobile platform stubs.
 //!
 //! **Taxonomy Classification**: Platform & Architecture (Deployment - Mobile).
 //!

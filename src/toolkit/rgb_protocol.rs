@@ -1,4 +1,4 @@
-﻿//! OpenRGB SDK client protocol parsing and connection helpers.
+//! OpenRGB SDK client protocol parsing and connection helpers.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

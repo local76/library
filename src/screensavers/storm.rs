@@ -1,4 +1,4 @@
-﻿//! Consolidated storm screensaver effect module.
+//! Consolidated storm screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

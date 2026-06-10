@@ -1,4 +1,4 @@
-﻿//! Platform providers implementing PlatformProvider trait.
+//! Platform providers implementing PlatformProvider trait.
 //!
 //! **Taxonomy Classification**: Platform & Architecture (Deployment - Native) + Role (System Software).
 

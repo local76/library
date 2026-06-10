@@ -1,4 +1,4 @@
-﻿//! Backward compatibility shim for lifecycle.
+//! Backward compatibility shim for lifecycle.
 //! Re-exports from the new app and backend modules.
 
 pub mod foreground {

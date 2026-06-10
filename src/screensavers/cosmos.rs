@@ -1,4 +1,4 @@
-﻿//! Consolidated cosmos screensaver effect module.
+//! Consolidated cosmos screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

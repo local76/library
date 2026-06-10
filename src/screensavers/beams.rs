@@ -1,4 +1,4 @@
-﻿//! Consolidated beams screensaver effect module.
+//! Consolidated beams screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

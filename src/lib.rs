@@ -1,4 +1,4 @@
-﻿// =====================================================
+// =====================================================
 // library - Shared utility library for the local76 apps ecosystem
 // Reorganized in 2026.6.9 into a simplified flat folder tree:
 // 1. core/ (neutral foundation)

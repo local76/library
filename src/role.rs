@@ -1,4 +1,4 @@
-﻿//! Backward compatibility shim for role.
+//! Backward compatibility shim for role.
 //! Re-exports from the new backend, app, and scenes modules.
 
 pub mod application {

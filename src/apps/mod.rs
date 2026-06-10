@@ -1,4 +1,4 @@
-﻿//! Application lifecycle, foreground/background controllers, and CLI executors.
+//! Application lifecycle, foreground/background controllers, and CLI executors.
 //!
 //! **Taxonomy Classification**: Execution State (Lifecycle) / Foreground & Background.
 

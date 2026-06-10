@@ -1,4 +1,4 @@
-﻿//! Consolidated disco screensaver effect module.
+//! Consolidated disco screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

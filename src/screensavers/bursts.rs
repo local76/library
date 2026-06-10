@@ -1,4 +1,4 @@
-﻿//! Consolidated bursts screensaver effect module.
+//! Consolidated bursts screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 

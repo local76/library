@@ -1,4 +1,4 @@
-﻿//! Headless / API Interface
+//! Headless / API Interface
 //!
 //! Software that has no traditional user interface and is designed strictly
 //! to communicate with other software.

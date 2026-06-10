@@ -1,4 +1,4 @@
-﻿//! Windows WiFi connection, disconnection, and profile management implementation.
+//! Windows WiFi connection, disconnection, and profile management implementation.
 //!
 //! **Taxonomy Classification**: Platform (WLAN / Win32 Connect).
 

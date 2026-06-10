@@ -1,4 +1,4 @@
-﻿//! Single-instance application guard helpers.
+//! Single-instance application guard helpers.
 //!
 //! **Taxonomy Classification**: Execution State (Lifecycle - Foreground) + Platform (Native).
 

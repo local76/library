@@ -1,4 +1,4 @@
-﻿//! Embedded platform stubs.
+//! Embedded platform stubs.
 //!
 //! **Taxonomy Classification**: Platform & Architecture (Deployment - Embedded).
 //!
