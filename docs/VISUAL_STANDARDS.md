@@ -118,7 +118,7 @@ embed-resource = "2"
 ```
 
 In its `build.rs` (canonical 4.2 pattern; used by all 10
-`screensavers-*` shim binaries):
+`screensaver-*` shim binaries):
 
 ```rust
 use std::path::Path;
