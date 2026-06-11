@@ -104,19 +104,44 @@ impl Win32IpcServer {
     where
         F: Fn(&str) -> String,
     {
-        // NOTE: a true connection-wait timeout (N3) requires either OVERLAPPED
-        // I/O or a thread-spawn with a Send-able HANDLE wrapper. Both add
-        // complexity and compile-time friction (the HANDLE is `*mut c_void`
-        // which is not Send by default; the existing `SendHandle` wrapper
-        // doesn't satisfy `std::thread::spawn`'s bound in the current
-        // windows-sys version). The 64KB buffer and from_utf8 fix (I4) below
-        // remain the priority; the timeout fix is deferred.
-        let connected = unsafe { ConnectNamedPipe(self.handle.0, ptr::null_mut()) };
-        if connected == 0 {
-            let err = Error::last_os_error();
-            if err.raw_os_error() != Some(535) {
-                // ERROR_PIPE_CONNECTED
-                return Err(err);
+        // 5s connection-wait timeout (N3). We spawn a thread that does
+        // the blocking ConnectNamedPipe and reports completion via a
+        // channel. The HANDLE is `*mut c_void`, which is not `Send` by
+        // default; we round-trip it through `usize` (which IS `Send`).
+        // SAFETY: the cast is well-defined for HANDLE on Windows; we
+        // restore the same pointer value in the spawned thread before use.
+        let handle_addr = self.handle.0 as usize;
+        let (tx, rx) = std::sync::mpsc::channel::<Result<(), Error>>();
+        let _ = std::thread::Builder::new()
+            .name("pi-ipc-connect".into())
+            .spawn(move || {
+                let handle = handle_addr as *mut std::ffi::c_void;
+                let connected = unsafe { ConnectNamedPipe(handle, ptr::null_mut()) };
+                if connected == 0 {
+                    let err = Error::last_os_error();
+                    if err.raw_os_error() != Some(535) {
+                        // ERROR_PIPE_CONNECTED (client connected before we called)
+                        let _ = tx.send(Err(err));
+                        return;
+                    }
+                }
+                let _ = tx.send(Ok(()));
+            });
+
+        match rx.recv_timeout(std::time::Duration::from_secs(5)) {
+            Ok(Ok(())) => {}
+            Ok(Err(e)) => return Err(e),
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+                return Err(Error::new(
+                    std::io::ErrorKind::TimedOut,
+                    "timed out waiting for pipe client",
+                ));
+            }
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
+                return Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    "connect thread disconnected",
+                ));
             }
         }
 
