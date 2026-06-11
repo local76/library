@@ -1,23 +1,21 @@
-﻿//! Graceful panic handler hook for TUI applications.
-//!
-//! **Taxonomy Classification**: Execution State (Lifecycle - Foreground).
+//! Graceful panic handler hook for console apps.
 
 use std::panic::PanicHookInfo;
 #[cfg(feature = "event-log")]
 use std::backtrace::Backtrace;
 
-/// Registers a custom panic hook that cleans up the TUI terminal state before printing the error.
+/// Registers a custom panic hook that cleans up the terminal state before printing the error.
 ///
-/// If a TUI application panics while raw mode is active or inside an alternate screen,
+/// If a console app panics while raw mode is active or inside an alternate screen,
 /// this hook will restore the standard terminal mode, output a formatted panic report to stderr,
 /// and log the full backtrace to the diagnostics log file.
-pub fn set_tui_panic_hook() {
+pub fn set_panic_hook() {
     std::panic::set_hook(Box::new(|panic_info| {
-        handle_tui_panic(panic_info);
+        handle_panic(panic_info);
     }));
 }
 
-fn handle_tui_panic(panic_info: &PanicHookInfo) {
+fn handle_panic(panic_info: &PanicHookInfo) {
     // 1. Clean up the terminal raw mode and alternate screen
     #[cfg(feature = "widgets")]
     {
@@ -65,6 +63,5 @@ fn handle_tui_panic(panic_info: &PanicHookInfo) {
     eprintln!("A detailed crash report has been saved to the diagnostics log.");
     eprintln!("Restored terminal to normal mode. Exiting.\n");
 
-    // Force terminate the process immediately to avoid deadlock or double panics
     std::process::exit(1);
 }

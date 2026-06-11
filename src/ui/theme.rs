@@ -1,10 +1,10 @@
 //! Theme coloring utility and factory for ratatui-based TUIs.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer).
+//! **Taxonomy Classification**: Interface (Presentation Layer).
 
 use ratatui::style::Color;
 
-/// Theme color definitions for styling TUI panels and text.
+/// Theme color definitions for styling console panels and text.
 #[derive(Debug, Clone, Copy)]
 pub struct ThemeColors {
     pub border: Color,
@@ -80,7 +80,7 @@ pub fn accent_color_from_hex(hex: &str) -> Color {
 /// Linux); apps that need a user-overridden accent should call
 /// `get_theme(dark, accent_color_from_hex(override_hex))` directly.
 ///
-/// This is the helper every r* TUI's "init theme" / "refresh theme" path
+/// This is the helper every console app's "init theme" / "refresh theme" path
 /// uses — it replaces the 3-line dance of `match theme_mode.as_str()`,
 /// `query_dark_mode`, and `query_accent_color` that pulse, helm, scout, and
 /// ignite each had duplicated in their `App::new` / `App::refresh_theme`.

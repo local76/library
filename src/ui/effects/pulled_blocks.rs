@@ -4,7 +4,7 @@
 //! `PulledParticles` motion with `Blocks` rendering.
 //! Default style: `Solid`. Default palette: `Monochrome(Blue)`.
 //!
-//! Classification: Interface (TUI) + Role (Application).
+//! Classification: Interface (console) + Role (Application).
 
 use crate::core::{LcgRng, TerminalCell};
 use super::dimensions::{Density, Palette, Speed, Style, resolve_color};

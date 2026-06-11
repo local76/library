@@ -1,6 +1,6 @@
-//! Common TUI key predicates shared by all 5 r* TUI apps.
+//! Common key predicates shared by all 5 r* apps.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Chrome Layer).
+//! **Taxonomy Classification**: Interface (Chrome Layer).
 //!
 //! Apps have bespoke `App` structs but the **predicate logic** for "is this
 //! key a quit-key?", "is this a help-toggle-key?", "is this an Up/Down that

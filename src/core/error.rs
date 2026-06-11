@@ -4,11 +4,16 @@
 
 use std::fmt;
 use std::error::Error;
+use std::io;
+use std::path::PathBuf;
 
 /// The primary error type for all operations in the library library.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LibraryError {
-    /// Errors occurring during local IPC named pipe or socket operations.
+    /// Filesystem / generic I/O failure. Use this for std::fs, std::net,
+    /// OpenOptions, read_to_string, etc.
+    Io(String),
+    /// Errors occurring during local IPC named pipe or socket operations ONLY.
     Ipc(String),
     /// Errors occurring during command-line argument parsing.
     Cli(String),
@@ -22,18 +27,25 @@ pub enum LibraryError {
     Platform(String),
     /// Errors occurring during text formatting or date/uptime calculations.
     Formatting(String),
+    /// Configuration parse / write / path resolution failure.
+    Config(String),
+    /// Path did not exist where one was required.
+    NotFound { kind: &'static str, path: PathBuf },
 }
 
 impl fmt::Display for LibraryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Ipc(msg) => write!(f, "IPC error: {}", msg),
-            Self::Cli(msg) => write!(f, "CLI error: {}", msg),
-            Self::Service(msg) => write!(f, "Service error: {}", msg),
-            Self::Guard(msg) => write!(f, "Lifecycle guard error: {}", msg),
-            Self::Rgb(msg) => write!(f, "RGB protocol error: {}", msg),
+            Self::Io(msg)       => write!(f, "I/O error: {}", msg),
+            Self::Ipc(msg)      => write!(f, "IPC error: {}", msg),
+            Self::Cli(msg)      => write!(f, "CLI error: {}", msg),
+            Self::Service(msg)  => write!(f, "Service error: {}", msg),
+            Self::Guard(msg)    => write!(f, "Lifecycle guard error: {}", msg),
+            Self::Rgb(msg)      => write!(f, "RGB protocol error: {}", msg),
             Self::Platform(msg) => write!(f, "Platform query error: {}", msg),
-            Self::Formatting(msg) => write!(f, "Formatting error: {}", msg),
+            Self::Formatting(m) => write!(f, "Formatting error: {}", m),
+            Self::Config(msg)   => write!(f, "Config error: {}", msg),
+            Self::NotFound { kind, path } => write!(f, "{} not found: {}", kind, path.display()),
         }
     }
 }
@@ -41,8 +53,8 @@ impl fmt::Display for LibraryError {
 impl Error for LibraryError {}
 
 impl LibraryError {
-    /// Check if the error represents a transient IPC connection abort or invalid param
-    /// that indicates host shutdown or client disconnection.
+    /// True only for genuine pipe/socket termination. File/registry/network
+    /// errors are now NEVER classified as IPC termination.
     pub fn is_ipc_termination(&self) -> bool {
         match self {
             Self::Ipc(msg) => {
@@ -64,9 +76,10 @@ pub type Result<T> = std::result::Result<T, LibraryError>;
 /// Convenient Result type alias utilizing LibraryError.
 pub type LibraryResult<T> = Result<T>;
 
-// Conversion helpers from std::io::Error
-impl From<std::io::Error> for LibraryError {
-    fn from(err: std::io::Error) -> Self {
-        Self::Ipc(err.to_string())
+// Explicit, narrow From — not a blanket conversion. Call-sites that genuinely
+// are doing pipe I/O can use .map_err(|e| LibraryError::Ipc(e.to_string())).
+impl From<io::Error> for LibraryError {
+    fn from(err: io::Error) -> Self {
+        Self::Io(err.to_string())
     }
 }

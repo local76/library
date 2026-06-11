@@ -163,13 +163,19 @@ fn get_all_monitors_uncached() -> Vec<String> {
 static MONITORS_CACHE: std::sync::Mutex<Option<(std::time::Instant, Vec<String>)>> = std::sync::Mutex::new(None);
 
 pub fn get_all_monitors() -> Vec<String> {
-    let mut lock = MONITORS_CACHE.lock().unwrap();
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    let mut lock = MONITORS_CACHE.lock().unwrap_or_else(|e| e.into_inner());
     if let Some((last_updated, val)) = &*lock {
         if last_updated.elapsed() < std::time::Duration::from_millis(2000) {
             return val.clone();
         }
     }
-    let val = get_all_monitors_uncached();
+    let val = match catch_unwind(AssertUnwindSafe(get_all_monitors_uncached)) {
+        Ok(v) => v,
+        Err(_) => {
+            if let Some((_, prev)) = lock.take() { prev } else { Vec::new() }
+        }
+    };
     *lock = Some((std::time::Instant::now(), val.clone()));
     val
 }

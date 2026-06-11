@@ -1,6 +1,4 @@
 //! Single-instance application guard helpers.
-//!
-//! **Taxonomy Classification**: Execution State (Lifecycle - Foreground) + Platform (Native).
 
 #[cfg(target_os = "windows")]
 type MutexHandle = windows_sys::Win32::Foundation::HANDLE;
@@ -21,7 +19,7 @@ enum SingleInstanceHandle {
     None,
 }
 
-/// Ensures only one instance of the TUI application is active at any time.
+/// Ensures only one instance of the application is active at any time.
 pub struct SingleInstanceGuard {
     #[allow(dead_code)]
     handle: SingleInstanceHandle,

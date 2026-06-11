@@ -1,7 +1,7 @@
-//! Cross-app TUI chrome helpers — the keyboard, mouse, and theme boilerplate
-//! that every local76 TUI app repeats.
+//! Cross-app chrome helpers — the keyboard, mouse, and theme boilerplate
+//! that every local76 app repeats.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Chrome Layer).
+//! **Taxonomy Classification**: Interface (Chrome Layer).
 //!
 //! Each helper is **field-free**: it doesn't try to own app state. Apps keep
 //! their bespoke `App` structs and call into these helpers to reduce ~80 lines
@@ -18,7 +18,7 @@ pub mod embedded_docs;
 pub mod app_state;
 pub mod chrome_mouse;
 
-pub use embedded_docs::{DOC_FILES, doc_for_f_key, is_doc_f_key, open_embedded_markdown};
+pub use embedded_docs::{DOC_FILES, doc, doc_for_f_key, is_doc_f_key, open_embedded_markdown};
 pub use app_state::{is_help_toggle_key, is_quit_key, scroll_for_key};
 pub use chrome_mouse::{
     BtnRect, ChromeAction, ChromeLayout, handle_chrome_mouse,

@@ -1,17 +1,17 @@
-//! Backend-agnostic screen palette for r* pixel-rendered effects (GDI + TUI).
+//! Backend-agnostic screen palette for r* pixel-rendered effects (GDI + console).
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 //!
 //! `ScreenPalette` is a non-ratatui-typed bundle of RGB-tuples that describes
 //! the canonical color story for a single r* app surface: background,
 //! foreground, accent, dim, hot, cool, plus a few semantic channels used
-//! across both TUI dashboards and fullscreen GDI screensavers.
+//! across both console dashboards and fullscreen GDI screensavers.
 //!
 //! In library 4.0 the goals are:
 //!
 //! - A single source of truth so `helm`, `pulse`, `trance-scenes`, and
 //!   future r* apps all derive their visual identity from the same place.
-//! - Backend-agnostic: the struct only holds `(u8, u8, u8)` tuples. TUI apps
+//! - Backend-agnostic: the struct only holds `(u8, u8, u8)` tuples. console apps
 //!   can wrap the tuples in `ratatui::style::Color`; GDI apps can use them
 //!   directly. No coupling between the two.
 //! - Predictable: the same accent + dark-mode always produces the same palette.
@@ -31,7 +31,7 @@
 //! - `library::core::hsl_to_rgb` / `rgb_to_hsl` for the math used to
 //!   derive `hot` and `cool` from the accent.
 //! - `library::interface::app::effects::dimensions::Palette` for the
-//!   TUI-typed `(u8, u8, u8)` palette used by the canonical 12 effects
+//!   console-typed `(u8, u8, u8)` palette used by the canonical 12 effects
 //!   (FallingGlyphs, RisingFlames, etc.). A `From<&ScreenPalette>` impl
 //!   bridges the two so effects can consume a `ScreenPalette` directly.
 

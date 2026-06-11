@@ -1,12 +1,12 @@
 [package]
 name = "library"
-version = "2026.6.11"
+version = "2026.6.10-1"
 authors = ["Jeryd <jerydleuck@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
 publish = false
-description = "Shared utility library, stubs, and UI widgets for the local76 ecosystem"
+description = "Shared utility library, widgets, and platform helpers for the local76 apps and screensavers"
 
 [dependencies]
 ratatui = { version = "0.30", default-features = false, features = ["termwiz"], optional = true }
@@ -46,6 +46,7 @@ windows-sys = { version = "0.59", features = [
     "Win32_NetworkManagement_Ndis",
     "Win32_System_Pipes",
     "Win32_NetworkManagement_WiFi",
+    "Win32_Media",
 ], optional = true }
 windows = { version = "0.52.0", features = [
     "Data_Xml_Dom",
@@ -58,59 +59,36 @@ windows = { version = "0.52.0", features = [
 libc = { version = "0.2", optional = true }
 
 [features]
-default = ["interface-app", "interface-api", "lifecycle-foreground", "lifecycle-background", "platform-native", "role-system", "role-application", "scenes", "winget", "screensaver-runtime"]
-
-# Windows target helpers
+# Cross-platform always-on platform shim
 windows-sys = ["dep:windows-sys"]
 
-# Taxonomy-aligned features (preferred for new code)
-interface-app = ["widgets", "effects"]
-interface-gui = ["gui"]
-interface-api = ["windows-sys"]
-lifecycle-foreground = ["window", "sys-info"]
-lifecycle-background = ["service", "event-log", "notification", "clipboard"]
-platform-native = ["sys-info", "reg"]
-platform-gpu = ["gpu"]
-role-system = ["sys-info", "reg", "service", "event-log"]
-role-application = []
-
-# library 4.1: the 10 screensaver effects (cosmos, glyphs, flame, bounce,
-# beams, storm, chaos, disco, bursts, gnats) live under
-# `library::role::application::scenes`. The default features include
-# `scenes`; apps that don't need the effects can opt out with
-# `default-features = false`.
-scenes = []
-
-# library 4.2: the screensaver runtime (window loop + CLI args + raw
-# terminal on non-Windows). The 10 effect binaries in screensavers/
-# enable this feature to get `library::screensaver_runtime::run_main`.
-# The 5 TUI apps and other library consumers that don't need to
-# host a screensaver process do not enable it. Default-off because it
-# pulls in `libc` on non-Windows and the Win32 GDI stack on Windows.
-screensaver-runtime = ["scenes", "platform-native", "role-application", "lifecycle-foreground", "dep:libc"]
-
-# library 4.3: cross-app TUI chrome (quit/help key predicates, F1-F7
-# doc keys, title-bar drag, button hit-tests, text-selection rules).
-# The 5 TUI apps enable this to drop ~80 lines of duplicated chrome
-# boilerplate per app. Default-off because it requires the `widgets`
-# feature (crossterm events) and a few of the legacy consumers don't
-# enable widgets.
-chrome = ["widgets"]
-
-# Granular / legacy (kept for compatibility with existing consumers)
-gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]
-widgets = ["dep:ratatui", "dep:crossterm", "lifecycle-foreground", "window"]
+# Granular features — depend on what you actually need.
+widgets = ["dep:ratatui", "dep:crossterm", "window"]
 sys-info = ["dep:sysinfo", "windows-sys", "dep:winreg"]
-
-winget = ["dep:rusqlite"]
-clipboard = ["windows-sys"]
+window = ["windows-sys"]
 service = ["windows-sys"]
 event-log = ["windows-sys"]
 notification = ["dep:windows"]
-window = ["windows-sys"]
+clipboard = ["windows-sys"]
 reg = ["dep:winreg", "windows-sys"]
+winget = ["dep:rusqlite"]
 gui = ["dep:eframe", "dep:egui"]
-effects = ["sys-info"]
+gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]
+
+# The 12 effects in `ui/effects/` (Verb × Noun × Style × Palette).
+# No additional deps; effects only use `core::*` primitives.
+effects = []
+
+# Composite features (for common combos).
+chrome = ["widgets"]
+screensaver-runtime = ["widgets", "sys-info", "window", "dep:libc"]
+
+# Backward-compat no-ops. Kept for one cycle so existing consumer
+# Cargo.toml features lists keep working. Safe to drop after 2026.6.11.
+scenes = []
+
+# Default features
+default = ["widgets", "sys-info", "window", "service", "event-log", "reg", "winget", "chrome"]
 
 [profile.release]
 opt-level = "z"          # Optimize for size
@@ -118,5 +96,3 @@ lto = true               # Enable Link Time Optimization
 codegen-units = 1        # Reduce codegen units to maximize size reduction
 panic = "abort"          # Remove panic unwinding code
 strip = true             # Strip symbols and debuginfo
-
-

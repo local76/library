@@ -1,7 +1,7 @@
-//! Cross-app TUI chrome mouse handler — title-bar drag, quit/help button
+//! Cross-app chrome mouse handler — title-bar drag, quit/help button
 //! hit-tests, text-selection drag, markdown scroll-wheel.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Chrome Layer).
+//! **Taxonomy Classification**: Interface (Chrome Layer).
 //!
 //! Apps have bespoke mouse handlers but the **chrome** part is identical:
 //! - Click in title rows 0..=2 → start title-bar drag (saves cursor + window pos)
@@ -20,7 +20,7 @@
 use crossterm::event::{MouseButton, MouseEvent, MouseEventKind};
 
 /// A clickable button rect in terminal coordinates. Used for the quit and
-/// help buttons that every r* TUI's title banner draws.
+/// help buttons that every r* app's title banner draws.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BtnRect {
     pub y: u16,

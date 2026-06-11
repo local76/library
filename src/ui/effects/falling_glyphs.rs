@@ -3,7 +3,7 @@
 //! Matrix-style falling characters with bright heads and fading trails.
 //! Default style: `Trailing`. Default palette: `Monochrome(Green)`.
 //!
-//! Classification: Interface (TUI) + Role (Application).
+//! Classification: Interface (console) + Role (Application).
 
 use std::cell::RefCell;
 use crate::core::{LcgRng, TerminalCell};

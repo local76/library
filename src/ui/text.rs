@@ -1,6 +1,6 @@
 //! Text wrapping and paragraph alignment utility helpers.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer).
+//! **Taxonomy Classification**: Interface (Presentation Layer).
 //!
 //! Helps custom terminal grids, screensavers, and widgets wrap and align paragraphs
 //! cleanly without spilling outside of their dedicated rendering boundaries.

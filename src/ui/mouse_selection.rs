@@ -1,8 +1,8 @@
 //! Mouse drag-to-select + clipboard copy helper for ratatui TUIs.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer).
+//! **Taxonomy Classification**: Interface (Presentation Layer).
 //!
-//! Encapsulates the nearly identical ~60-line mouse-selection block that appears in every r* TUI.
+//! Encapsulates the nearly identical ~60-line mouse-selection block that appears in every console app.
 //! Apps hold a `MouseSelection` state, push raw mouse events into it each frame, then call
 //! `apply_to_buffer` to highlight, and `take_copy_text` to read out + copy the selected text.
 

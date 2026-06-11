@@ -30,6 +30,12 @@
 
 use std::sync::atomic::{AtomicI32, Ordering};
 
+// Ordering::Relaxed is correct and necessary: this is a single global
+// counter whose value is only ever inc'd or dec'd. We never observe the
+// counter from multiple threads in a way that requires ordering relative
+// to any other memory; the OS sleep state is the actual coordination
+// point. Tightening to SeqCst/AcqRel would add a fence to every nested
+// guard acquire/release with no observable benefit.
 static SLEEP_PREVENTION_COUNT: AtomicI32 = AtomicI32::new(0);
 
 /// Query the current global count of active sleep prevention locks in the process.
@@ -48,8 +54,15 @@ fn set_priority_values(win_class: u32, unix_nice: i32) {
     #[cfg(all(windows, feature = "windows-sys"))]
     unsafe {
         let process = GetCurrentProcess();
-        let _ = SetPriorityClass(process, win_class);
-        
+        let ok = SetPriorityClass(process, win_class);
+        if ok == 0 && !process.is_null() {
+            crate::apps::file_log::log_message(
+                "WARNING",
+                &format!("SetPriorityClass({:#x}) failed: OS error {}",
+                         win_class, std::io::Error::last_os_error()),
+            );
+        }
+
         let thread = GetCurrentThread();
         let _ = SetThreadPriority(thread, THREAD_PRIORITY_BELOW_NORMAL);
     }
@@ -167,11 +180,23 @@ pub fn set_thread_execution_state(request: PowerRequest) {
 /// ```
 pub fn prevent_system_sleep(prevent: bool) {
     if prevent {
-        SLEEP_PREVENTION_COUNT.fetch_add(1, Ordering::Relaxed);
-        set_thread_execution_state(PowerRequest::KeepSystemAwake);
+        let prev = SLEEP_PREVENTION_COUNT.fetch_add(1, Ordering::Relaxed);
+        // 0 -> 1: first acquirer must actually ask the OS.
+        if prev == 0 {
+            set_thread_execution_state(PowerRequest::KeepSystemAwake);
+        }
+        // Defensive: if the count went negative due to a previous bug, never
+        // let the OS see AllowSleep. Saturate at 0.
+        if prev < 0 {
+            SLEEP_PREVENTION_COUNT.store(0, Ordering::Relaxed);
+        }
     } else {
-        SLEEP_PREVENTION_COUNT.fetch_sub(1, Ordering::Relaxed);
-        set_thread_execution_state(PowerRequest::AllowSleep);
+        let prev = SLEEP_PREVENTION_COUNT.fetch_sub(1, Ordering::Relaxed);
+        // Only the LAST releaser returns the OS to normal.
+        if prev <= 1 {
+            SLEEP_PREVENTION_COUNT.store(0, Ordering::Relaxed);
+            set_thread_execution_state(PowerRequest::AllowSleep);
+        }
     }
 }
 

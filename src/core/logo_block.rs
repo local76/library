@@ -1,6 +1,6 @@
 //! 5x5 block-letter logo renderer. Pure string-transformer with a static
 //! cache — fits in `core` (no `interface` / `role` dependencies) so both
-//! the r* TUI effects (interface layer) and the r* screensaver effects
+//! the console app effects (interface layer) and the r* screensaver effects
 //! (role layer) can call it without violating the 4-layer taxonomy.
 
 /// 5x5 block font patterns (█ = on). Used to render live logo_text + kernel
@@ -47,7 +47,7 @@ type LogoCacheEntry = (String, Option<String>, Vec<String>);
 
 /// Renders the live centered logo block (logo_text as big block letters
 /// using the 5x5 font above + optional sub_text line underneath).
-/// Perfect for retro TUI effects and dashboards.
+/// Perfect for retro console effects and dashboards.
 pub fn render_logo_block(text: &str, sub_text: Option<&str>) -> Vec<String> {
     static CACHE: std::sync::Mutex<Option<LogoCacheEntry>> = std::sync::Mutex::new(None);
     let mut lock = CACHE.lock().unwrap();

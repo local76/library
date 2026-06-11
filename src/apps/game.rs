@@ -1,9 +1,9 @@
-//! Mini-game state machines for TUI/screensaver integration.
+//! Mini-game state machines for console/screensaver integration.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 
 // Canonical LcgRng is defined in core.rs so it cannot be accidentally
-// changed by TUI-only or platform-specific code.
+// changed by console-only or platform-specific code.
 pub use crate::core::LcgRng;
 
 // LcgRng implementation lives in core.rs (single source of truth across all

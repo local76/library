@@ -1,6 +1,4 @@
-//! User Interface (TUI and GUI) components and layout structures.
-//!
-//! **Taxonomy Classification**: Interface (TUI/GUI / Presentation Layer).
+//! Widgets, layout, and visual primitives.
 
 #[cfg(feature = "widgets")]
 pub mod textbox;

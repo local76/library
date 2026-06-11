@@ -2,7 +2,7 @@
 //!
 //! Heat plume of rising bright particles. Default style: `Solid`. Default palette: `Heat`.
 //!
-//! Classification: Interface (TUI) + Role (Application).
+//! Classification: Interface (console) + Role (Application).
 
 use crate::core::{LcgRng, TerminalCell};
 use super::dimensions::{Density, Direction, Palette, Speed, Style, resolve_color};

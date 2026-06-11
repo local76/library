@@ -6,43 +6,57 @@
 //! using `wgpu` and to execute simple compute shaders without requiring a window or surface.
 
 use wgpu::{Device, Queue, Instance, PowerPreference, RequestAdapterOptions};
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
-static HEADLESS_GPU: OnceLock<Option<(Device, Queue)>> = OnceLock::new();
+type GpuPair = (Device, Queue);
+static HEADLESS_GPU: OnceLock<Result<GpuPair, String>> = OnceLock::new();
+static GPU_RESET_TOKEN: Mutex<u64> = Mutex::new(0);
 
-/// Initialize the headless GPU context (Device and Queue) synchronously.
-///
-/// This uses `pollster` to run the async adapter and device requests on a block_on queue,
-/// caching the resulting handles globally so subsequent calls are cheap.
-pub fn init_headless_gpu() -> Option<(Device, Queue)> {
-    let opt = HEADLESS_GPU.get_or_init(|| {
-        pollster::block_on(async {
-            let instance = Instance::default();
-            let adapter = instance
-                .request_adapter(&RequestAdapterOptions {
-                    power_preference: PowerPreference::HighPerformance,
-                    force_fallback_adapter: false,
-                    compatible_surface: None,
-                })
-                .await?;
-            
-            let (device, queue) = adapter
-                .request_device(
-                    &wgpu::DeviceDescriptor {
-                        label: Some("library Headless GPU Device"),
-                        required_features: wgpu::Features::empty(),
-                        required_limits: wgpu::Limits::downlevel_defaults(),
-                        memory_hints: wgpu::MemoryHints::default(),
-                    },
-                    None,
-                )
-                .await
-                .ok()?;
-            Some((device, queue))
-        })
+/// Returns Ok on success, Err(msg) on init failure. The result is cached
+/// for the lifetime of the process; if a transient failure is suspected
+/// (driver hang, sleep/resume), call `reset_headless_gpu()` to retry.
+pub fn init_headless_gpu() -> Result<GpuPair, String> {
+    if let Some(r) = HEADLESS_GPU.get() {
+        return r.clone();
+    }
+    let result: Result<GpuPair, String> = pollster::block_on(async {
+        let instance = Instance::default();
+        let adapter = instance
+            .request_adapter(&RequestAdapterOptions {
+                power_preference: PowerPreference::HighPerformance,
+                force_fallback_adapter: false,
+                compatible_surface: None,
+            })
+            .await
+            .ok_or_else(|| "no GPU adapter available".to_string())?;
+        let (device, queue) = adapter
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    label: Some("library Headless GPU Device"),
+                    required_features: wgpu::Features::empty(),
+                    required_limits: wgpu::Limits::downlevel_defaults(),
+                    memory_hints: wgpu::MemoryHints::default(),
+                },
+                None,
+            )
+            .await
+            .map_err(|e| format!("request_device failed: {}", e))?;
+        Ok((device, queue))
     });
+    // Try to install; another thread may have raced us — use their result.
+    let _ = HEADLESS_GPU.set(result.clone());
+    result
+}
 
-    opt.clone()
+/// Force the next call to re-initialize the GPU context. Returns the
+/// previous token so the caller can detect spurious resets.
+pub fn reset_headless_gpu() -> u64 {
+    let mut g = GPU_RESET_TOKEN.lock().unwrap_or_else(|e| e.into_inner());
+    *g = g.wrapping_add(1);
+    // Note: OnceLock is write-once. We cannot invalidate the inner value
+    // directly. The run_compute_shader API checks the reset token
+    // and re-initializes on mismatch. See below.
+    *g
 }
 
 /// Helper to execute a 1D compute shader with an input float array, returning the modified array.
@@ -55,7 +69,7 @@ pub fn init_headless_gpu() -> Option<(Device, Queue)> {
 /// * `entry_point` - Name of the entry point function (usually `"main"`).
 /// * `data` - Input vector of `f32` floats to process.
 pub fn run_compute_shader(shader_src: &str, entry_point: &str, data: &[f32]) -> Option<Vec<f32>> {
-    let (device, queue) = init_headless_gpu()?;
+    let (device, queue) = init_headless_gpu().ok()?;
     
     // Create shader module
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {

@@ -1,15 +1,13 @@
-//! One-shot TUI bootstrap: enable raw mode, alt screen, mouse capture, console sizing.
+//! One-shot bootstrap: enable raw mode, alt screen, mouse capture, console sizing.
 //!
-//! **Taxonomy Classification**: Execution State (Lifecycle - Foreground).
-//!
-//! Encapsulates the ~25-line raw-mode + alt-screen + size + borderless dance that
-//! starts every r* TUI's `main()`. Returns a `Terminal` ready for rendering.
+//! Encapsulates the raw-mode + alt-screen + size + borderless dance that
+//! starts every app's `main()`. Returns a `Terminal` ready for rendering.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
 static APP_SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 
-/// Signal that the TUI application is shutting down.
+/// Signal that the application is shutting down.
 pub fn set_app_shutting_down(val: bool) {
     APP_SHUTTING_DOWN.store(val, Ordering::Relaxed);
 }
@@ -20,7 +18,7 @@ pub fn is_app_shutting_down() -> bool {
 }
 
 #[cfg(all(target_os = "windows", feature = "widgets"))]
-unsafe extern "system" fn tui_ctrl_handler(ctrl_type: u32) -> windows_sys::Win32::Foundation::BOOL {
+unsafe extern "system" fn ctrl_handler(ctrl_type: u32) -> windows_sys::Win32::Foundation::BOOL {
     use windows_sys::Win32::Foundation::FALSE;
     use windows_sys::Win32::System::Console::{
         CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT, CTRL_LOGOFF_EVENT, CTRL_SHUTDOWN_EVENT
@@ -28,22 +26,15 @@ unsafe extern "system" fn tui_ctrl_handler(ctrl_type: u32) -> windows_sys::Win32
 
     match ctrl_type {
         CTRL_C_EVENT | CTRL_BREAK_EVENT | CTRL_CLOSE_EVENT | CTRL_LOGOFF_EVENT | CTRL_SHUTDOWN_EVENT => {
-            // Signal background threads to stop
+            // SAFETY: the Windows console control handler runs on a thread owned
+            // by the OS, in a context where many locks (crossterm internals,
+            // notification state, panic hook) are NOT safe to take — if the
+            // main thread is currently holding one of them and panics, this
+            // handler can deadlock or re-panic. We do the minimum: flip an
+            // atomic flag. The normal shutdown path observes the flag and runs
+            // all cleanup (raw mode, alt screen, toast clear) on its own
+            // thread. (Fix for I12 / B5 panic-during-panic.)
             set_app_shutting_down(true);
-
-            // Clear notifications
-            #[cfg(feature = "notification")]
-            crate::apps::notification::clear_my_toast_notifications();
-
-            // Restore terminal state
-            let _ = crossterm::terminal::disable_raw_mode();
-            let _ = crossterm::execute!(
-                std::io::stdout(),
-                crossterm::terminal::LeaveAlternateScreen,
-                crossterm::event::DisableMouseCapture
-            );
-
-            // Return FALSE so the default handler still terminates the process.
             FALSE
         }
         _ => FALSE,
@@ -61,12 +52,12 @@ mod imp {
         event::{EnableMouseCapture, DisableMouseCapture},
     };
 
-    use crate::apps::panic::set_tui_panic_hook;
+    use crate::apps::panic::set_panic_hook;
     use crate::apps::window::{BorderlessConsole, ConsoleTitleGuard, SingleInstanceGuard, center_console_window};
 
-    /// Configuration for `bootstrap_tui`.
+    /// Configuration for `bootstrap::init`.
     #[derive(Debug, Clone)]
-    pub struct TuiBootstrapConfig {
+    pub struct Config {
         /// Window title (used for the console tab/title and the `ConsoleTitleGuard`).
         pub title: &'static str,
         /// Whether to enforce a 100x35 minimum via `SetSize`.
@@ -75,11 +66,11 @@ mod imp {
         pub enforce_single_instance: bool,
         /// If true, enable the borderless console window and skip centering.
         pub borderless: bool,
-        /// Whether to install the `set_tui_panic_hook` (recommended).
+        /// Whether to install the `set_panic_hook` (recommended).
         pub install_panic_hook: bool,
     }
 
-    impl TuiBootstrapConfig {
+    impl Config {
         pub fn new(title: &'static str) -> Self {
             Self {
                 title,
@@ -92,11 +83,11 @@ mod imp {
     }
 
     /// Automatically disables raw mode and restores screen settings on drop.
-    pub struct TerminalGuard {
+    pub struct ConsoleGuard {
         active: bool,
     }
 
-    impl TerminalGuard {
+    impl ConsoleGuard {
         pub fn new() -> Self {
             Self { active: true }
         }
@@ -105,13 +96,13 @@ mod imp {
         }
     }
 
-    impl Default for TerminalGuard {
+    impl Default for ConsoleGuard {
         fn default() -> Self {
             Self::new()
         }
     }
 
-    impl Drop for TerminalGuard {
+    impl Drop for ConsoleGuard {
         fn drop(&mut self) {
             if self.active {
                 let _ = disable_raw_mode();
@@ -124,35 +115,35 @@ mod imp {
         }
     }
 
-    /// All Drop guards returned by `bootstrap_tui` so the caller can keep them alive.
-    pub struct TuiGuards {
+    /// All Drop guards returned by `init` so the caller can keep them alive.
+    pub struct Guards {
         /// Set if `enforce_single_instance` is true.
         pub _instance_guard: Option<SingleInstanceGuard>,
-        /// Always set while the TUI is running.
+        /// Always set while running.
         pub _title_guard: ConsoleTitleGuard,
         /// Set if `borderless` is true.
         pub _borderless: Option<BorderlessConsole>,
         /// Restores terminal configuration automatically on drop.
-        pub _terminal_guard: TerminalGuard,
+        pub _console_guard: ConsoleGuard,
     }
 
     /// Enable raw mode, alt screen, mouse capture, sizing, optional single-instance & borderless.
     /// Returns the Terminal + Drop guards. The caller should hold onto `guards` until shutdown.
-    pub fn bootstrap_tui(
-        config: TuiBootstrapConfig,
-    ) -> io::Result<(Terminal<TermwizBackend>, TuiGuards)> {
+    pub fn init(
+        config: Config,
+    ) -> io::Result<(Terminal<TermwizBackend>, Guards)> {
         super::set_app_shutting_down(false);
 
         #[cfg(target_os = "windows")]
         unsafe {
             let _ = windows_sys::Win32::System::Console::SetConsoleCtrlHandler(
-                Some(super::tui_ctrl_handler),
+                Some(super::ctrl_handler),
                 windows_sys::Win32::Foundation::TRUE,
             );
         }
 
         if config.install_panic_hook {
-            set_tui_panic_hook();
+            set_panic_hook();
         }
 
         let _instance_guard = if config.enforce_single_instance {
@@ -187,21 +178,21 @@ mod imp {
         let mut terminal = Terminal::new(backend)?;
         terminal.clear()?;
 
-        let _terminal_guard = TerminalGuard::new();
+        let _console_guard = ConsoleGuard::new();
 
         Ok((
             terminal,
-            TuiGuards {
+            Guards {
                 _instance_guard,
                 _title_guard,
                 _borderless,
-                _terminal_guard,
+                _console_guard,
             },
         ))
     }
 
     /// Restore raw-mode terminal state. Call this at the end of `main` (or in a Drop).
-    pub fn shutdown_tui(
+    pub fn shutdown(
         _terminal: &mut Terminal<TermwizBackend>,
     ) -> io::Result<()> {
         super::set_app_shutting_down(true);

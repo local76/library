@@ -1,23 +1,12 @@
 //! Core shared types and primitives.
 //!
-//! **Taxonomy Classification**: Core (neutral foundation).
-//!
-//! For taxonomy details, see [ARCHITECTURE.md](file:///C:/Users/jeryd/Synology/Home/Projects/local76/library/ARCHITECTURE.md).
-//! Cross-platform with native features and platform-specific stubs.
-//!
 //! These are the fundamental building blocks that can be safely used
 //! across *all* categories without pulling in heavy UI, platform, or
 //! lifecycle dependencies.
 //!
-//! Taxonomy Layers:
-//! 1. Interface (Presentation)
-//! 2. Execution State (Lifecycle)
-//! 3. Platform & Architecture
-//! 4. System Role (Purpose)
-//!
-//! Goal: Nothing in this module should be "TUI only" or "Windows only"
-//!       in a way that would break CLI tools, background services,
-//!       or future embedded/web targets.
+//! Nothing in this module should be "ratatui only" or "Windows only"
+//! in a way that would break CLI tools, background services,
+//! or future embedded/web targets.
 //!
 //! All shared data types (LcgRng, TerminalCell, SystemInfo/DashboardInfo) live here
 //! as the single source of truth.
@@ -26,7 +15,7 @@ pub const UNKNOWN_HOST: &str = "localhost";
 
 /// Linear Congruential Generator. The single canonical RNG implementation
 /// used by games, effects, and any deterministic logic across the entire
-/// apps suite (CLI tools, TUI effects, background services, etc.).
+/// apps suite (CLI tools, console effects, background services, etc.).
 pub struct LcgRng(u64);
 
 impl LcgRng {
@@ -78,7 +67,7 @@ mod tests {
 
 /// A single cell in a character-grid renderer.
 ///
-/// This is the universal currency for retro/TUI effects, dashboards,
+/// This is the universal currency for retro/console effects, dashboards,
 /// and any text-based visual output. It is deliberately backend-agnostic
 /// (works with ratatui, custom GDI renderers in trance-scenes, headless
 /// logging, etc.).
@@ -104,12 +93,12 @@ impl Default for TerminalCell {
 /// Rich live system context used by effects, dashboards, and monitoring tools.
 ///
 /// Populated from the platform-specific sys_info implementations but
-/// presented in a neutral shape so TUI effects, CLI tools, and background
+/// presented in a neutral shape so console effects, CLI tools, and background
 /// monitors can all consume the same data without depending on ratatui
 /// or Windows-specific types.
 ///
 /// This type lives in `core` precisely so that adding new fields for one
-/// presentation layer (e.g. fancy TUI effects) cannot accidentally break
+/// presentation layer (e.g. fancy console effects) cannot accidentally break
 /// CLI tools or background services that only care about the data.
 #[derive(Debug, Clone, Default)]
 pub struct DashboardInfo {
@@ -130,7 +119,7 @@ pub struct DashboardInfo {
     pub monitors: String,
 }
 
-/// Classification: Core (neutral data usable by Interface/TUI effects, Role/Application dashboards,
+/// Classification: Core (neutral data usable by Interface/console effects, Role/Application dashboards,
 /// Platform/Native queries, Lifecycle/Background monitors, etc.).
 /// 
 /// Enhanced SystemInfo / Dashboard context ported and generalized from trance-scenes/trance-core
@@ -260,13 +249,13 @@ pub fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f32, f32, f32) {
 /// Backend-agnostic screensaver trait (no ratatui). See [`screensaver`] module.
 ///
 /// In library 4.0 this is the single source of truth for the screensavers used
-/// across r* TUI apps and r* GDI screensaver apps (trance-scenes). The ratatui
+/// across console apps and r* GDI screensaver apps (trance-scenes). The ratatui
 /// renderer wrapper lives in `interface::app::screensaver::ScreensaverRenderer`.
 pub mod screensaver;
 pub use screensaver::{Screensaver, ScreensaverState};
 
 /// library 4.1: 5x5 block-letter logo renderer. Moved from
-/// `interface::app::effects::logo` to `core` so both the r* TUI effects
+/// `interface::app::effects::logo` to `core` so both the console app effects
 /// (interface layer) and the r* screensaver effects (role layer) can
 /// import it without violating the 4-layer taxonomy (role is not
 /// allowed to import from interface).
@@ -302,6 +291,7 @@ pub mod build_resources;
 pub mod rc_split;
 pub mod screen_palette;
 pub mod formatting;
+pub mod xml_escape;
 
 /// Calculate percentage from two unsigned integers.
 /// Returns 0.0 if total is 0 to avoid division by zero.

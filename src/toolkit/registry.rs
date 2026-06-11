@@ -58,23 +58,11 @@ impl FileLock {
             }
             std::thread::sleep(std::time::Duration::from_millis(50));
         }
-        if let Ok(meta) = std::fs::metadata(&lock_path) {
-            if let Ok(modified) = meta.modified() {
-                if let Ok(elapsed) = modified.elapsed() {
-                    if elapsed.as_secs() > 5 {
-                        let _ = std::fs::remove_file(&lock_path);
-                        if std::fs::OpenOptions::new()
-                            .write(true)
-                            .create_new(true)
-                            .open(&lock_path)
-                            .is_ok()
-                        {
-                            return Self { lock_path, acquired: true };
-                        }
-                    }
-                }
-            }
-        }
+        // Do NOT delete a stale lock here. Another holder may still be writing,
+        // and unlinking its lock under it allows concurrent writes that corrupt
+        // the registry file. The caller is expected to retry or surface the
+        // `acquired = false` state. (Fix for I18 — the prior implementation
+        // could stomp on a live holder after a 5s mtime check.)
         Self { lock_path, acquired: false }
     }
 }

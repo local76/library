@@ -5,20 +5,28 @@ All notable changes to library will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2026.6.10.1] - 2026-06-10
+
+### Changed
+- **4-layer shim files removed**: `interface.rs`, `lifecycle.rs`, `platform.rs`, `role.rs` deleted from `library/src/`. The `lib.rs` no longer carries the 4-layer `pub mod` lines.
+- **`Screensaver` re-export points at the canonical path**: `pub use ui::screensaver_renderer::{Screensaver, ScreensaverRenderer};` (was `pub use interface::app::screensaver::...`).
+- **Cargo features re-shaped**: dropped the 4-layer prefix names (`interface-app`, `lifecycle-foreground`, `platform-native`, `role-system`, `role-application`). The new feature set is granular: `widgets`, `sys-info`, `window`, `service`, `event-log`, `notification`, `clipboard`, `reg`, `winget`, `gpu`, `gui`, `effects`, plus composites `chrome` and `screensaver-runtime`. The `scenes` and `effects` no-op features are kept for one cycle for backward compat.
+- **`tui_bootstrap` module renamed to `bootstrap`**: `TuiBootstrapConfig` → `Config`, `bootstrap_tui()` → `init()`, `shutdown_tui()` → `shutdown()`, `set_tui_panic_hook()` → `set_panic_hook()`, `TuiEffect` → `Effect`, `tui_ctrl_handler` → `ctrl_handler`. All 5 apps and the test suite updated.
+- **Doc sweep**: `local76/README.md`, `local76/index.md`, `library/README.md`, `library/ARCHITECTURE.md`, `library/CONTRIBUTING.md`, `library/META_AUDIT.md`, all 4 of `library/docs/*`, the app-helm docs, the toolkit README, and `run.ps1` rewritten. The 3.x → 4.x path migration table and the "TUI" qualifier references are gone.
+- **Daily release automation added**: `toolkit/scripts/daily-release.ps1` (and 3 helper scripts: `release-check.ps1`, `install-daily-task.ps1`, `notify-release.ps1`) runs at 04:00 PT, gated on new commits. See `toolkit/README.md`.
 
 ## [2026.6.11] - 2026-06-10
 
 ### Added
-- **library 4.3 — Cross-app TUI chrome module**: new `library::apps::chrome` namespace (feature-gated on `chrome = ["widgets"]`) collects the keyboard, mouse, and embedded-docs helpers every r* TUI app used to re-implement. The 5 TUI apps (pulse, helm, scout, ignite, trance) all enable the new `chrome` feature in their `Cargo.toml`.
+- **Cross-app chrome module**: new `library::apps::chrome` namespace (feature-gated on `chrome = ["widgets"]`) collects the keyboard, mouse, and embedded-docs helpers every app used to re-implement. All 5 apps enable the new `chrome` feature in their `Cargo.toml`.
   - `embedded_docs`: `DOC_FILES`, `doc_for_f_key(n)`, `is_doc_f_key(code)`, `open_embedded_markdown(code)` — the F1..F7 README/SUPPORT/LICENSE/COPYRIGHT/PRIVACY/SECURITY/CONTRIBUTING mapping.
   - `app_state`: `is_quit_key(code, mods)`, `is_quit_key_event(&KeyEvent)`, `is_help_toggle_key(code)`, `scroll_for_key(code, scroll, line_count, viewport_h)` — the 4 key predicates that the apps' `app::keys::handle_key` functions all open with.
-  - `chrome_mouse`: `ChromeLayout`, `BtnRect`, `ChromeAction`, `handle_chrome_mouse(layout, event, markdown_open)`, `text_selection_release_decision(start, end)` — the title-bar drag, quit/help button hit-tests, text-selection rules, and markdown scroll-wheel that every r* TUI's `app::mouse::handle_mouse` rolls.
+  - `chrome_mouse`: `ChromeLayout`, `BtnRect`, `ChromeAction`, `handle_chrome_mouse(layout, event, markdown_open)`, `text_selection_release_decision(start, end)` — the title-bar drag, quit/help button hit-tests, text-selection rules, and markdown scroll-wheel that every app's `app::mouse::handle_mouse` rolls.
 - **library::ui::theme::current_theme(theme_mode)** — replaces the 3-line `match theme_mode + query_dark_mode + query_accent_color` dance in apps' `App::new` and `App::refresh_theme`. Pulse migrates to it directly; helm/ignite still use the lower-level `get_theme` + `accent_color_from_hex` form because they accept a CLI-overridden accent hex.
 - **29 new unit tests** for the chrome module: 5 for `embedded_docs`, 11 for `app_state`, 13 for `chrome_mouse`. Library test count rises 100 → 131 (with `chrome` feature).
 
 ### Changed
-- **scout** and **ignite** now use `library::lifecycle::background::file_log` directly (deleted their local 67-line `src/logger.rs` each). Both apps now call `set_log_app_name("app/scout")` / `set_log_app_name("app/ignite")` at startup, matching the pattern already used by pulse and helm — log files now correctly land at `%APPDATA%\local76\app\scout\log.txt` (and `\ignite\`) instead of the default `\library\log.txt` folder.
+- **scout** and **ignite** now use `library::apps::file_log` directly (deleted their local 67-line `src/logger.rs` each). Both apps now call `set_log_app_name("app/scout")` / `set_log_app_name("app/ignite")` at startup, matching the pattern already used by pulse and helm — log files now correctly land at `%APPDATA%\local76\app\scout\log.txt` (and `\ignite\`) instead of the default `\library\log.txt` folder.
 - **scout** and **ignite** now use `library::toolkit::config::AppConfig<T>` (deleted their local 130-line `src/config.rs` each). The new `src/config.rs` in each is a ~90-line thin shim that defines the `Config` struct + `ConfigFields` impl, exactly mirroring the pulse and helm pattern.
 - **pulse** replaced its local `pub const DOC_FILES: &[&str]` table in `src/ui/overlays.rs` with `pub use library::apps::chrome::DOC_FILES`.
 - **pulse** deleted its `src/docs.rs` (`doc_for_f_key` duplicate) and routes through `library::apps::chrome::doc_for_f_key` instead.

@@ -1,76 +1,117 @@
 # Contributing to library
 
-Thank you for your interest in contributing to `library`! This document outlines the guidelines and best practices for developing, testing, and contributing to the shared foundation of the `local76` ecosystem.
+Thank you for your interest in contributing to `library`! This
+document outlines the guidelines and best practices for developing,
+testing, and contributing to the shared foundation of the `local76`
+ecosystem.
 
 ---
 
-## 🏛️ Architecture & Taxonomy
+## 🏛️ Architecture
 
-All code added to `library` must conform to the 4-layer taxonomy defined in [ARCHITECTURE.md](file:///C:/Users/jeryd/Synology/Home/Projects/local76/library/ARCHITECTURE.md). This classification prevents accidental coupling between distinct concerns.
+All code added to `library` should be classified by topic. The 4
+folders are:
 
-### The 4 Layers
+1. **`core/`** — neutral foundation. No heavy UI, platform, or
+   lifecycle dependencies. The `Screensaver` trait, `TerminalCell`,
+   `ScreenPalette`, `LcgRng`, color conversion, formatting, error
+   types, the ICO splitter for the build pipeline, and the logo
+   block renderer all live here.
 
-1. **Interface (Presentation Layer)**:
-   - Location: `src/interface/`
-   - Purpose: Visual/non-visual communication (CLI, TUI, GUI, Headless API).
-   - Rules: Keep presentation logic separate from system operations.
+2. **`ui/`** — presentation. Ratatui widgets, the design system
+   (`theme`, `layout`, `text`, `status_bar`, `toast`, `markdown`,
+   `title_banner`, `mouse_selection`, `scrollbar`, `textbox`,
+   `tabs`, `effect_preview`), the `ScreensaverRenderer`, and the
+   12 in-app effects in `ui::effects::*`.
 
-2. **Execution State (Lifecycle)**:
-   - Location: `src/lifecycle/`
-   - Purpose: OS-level execution status (Foreground console management, silent background services/daemons).
-   - Rules: Avoid adding specific application logic here; focus on execution boundaries.
+3. **`toolkit/`** — platform utilities. `sys_info`, `monitors`,
+   `config`, `registry`, `ipc`, `clipboard`, `packages`,
+   `rgb_controller`, `gpu`, `wlan`, and per-platform splits under
+   `platforms::*`.
 
-3. **Platform & Architecture (Deployment)**:
-   - Location: `src/platform/`
-   - Purpose: OS-specific integrations (Windows Registry, DRM display connector queries, etc.).
-   - Rules: Restrict host-specific APIs to `platform/native/{windows, linux}.rs` and expose them through unified cross-platform interfaces in `platform/native/sys_info.rs`.
+4. **`apps/`** — lifecycle & run control. `window`, `guard`,
+   `identity`, `panic`, `bootstrap`, `console`, `file_log`,
+   `daemon`, `service`, `event_log`, `notification`, `clipboard`,
+   and the cross-app `chrome` helpers.
 
-4. **System Role (Purpose)**:
-   - Location: `src/role/`
-   - Purpose: Purpose-driven operations (low-level system infrastructure in `role/system`, user-oriented application logic in `role/application`).
-
-*Note: Truly neutral primitives (data shapes, deterministic RNGs, etc.) that have zero heavy platform or presentation assumptions may be placed in [src/core.rs](file:///C:/Users/jeryd/Synology/Home/Projects/local76/library/src/core.rs).*
-
----
-
-## 📦 Feature Gates & Binary Size
-
-To prevent bloat in small CLI daemons, all new functionality must be gated behind appropriate Cargo features.
-
-- **Prefer taxonomy-aligned features** (e.g. `interface-tui`, `platform-native`, `role-application`) for consumer-facing imports.
-- Place all raw library dependencies (like `ratatui`, `eframe`, `sysinfo`) under optional dependencies and gate them using granular feature flags in `Cargo.toml`.
+Truly neutral primitives that don't pull in heavy platform or
+presentation assumptions go in `core`. Everything else goes in the
+folder whose topic it most directly serves.
 
 ---
 
-## 🛠️ Cross-Platform Standards
+## 📦 Feature gates
+
+To prevent bloat in small CLI daemons, all new functionality must be
+gated behind appropriate Cargo features. Features are **granular** —
+depend on what you actually need, not on a layered umbrella.
+
+- `widgets` — ratatui widgets (theme, status bar, toast, markdown
+  viewer, layout guard, etc.)
+- `sys-info` — system info helpers
+- `window` — console window management
+- `service` — background service runner
+- `event-log` — Windows Event Log writer
+- `notification` — Windows toast notifications
+- `clipboard` — clipboard read/write
+- `reg` — Windows registry abstraction
+- `winget` — local winget SQLite scanner
+- `chrome` — cross-app keyboard/mouse/embedded-docs helpers
+  (composite: pulls in `widgets`)
+- `gpu` — headless GPU compute
+- `gui` — egui/eframe native windowing
+- `effects` — the 12 in-app effects
+- `screensaver-runtime` — Win32 GDI + raw-termios main loop (the 10
+  `screensaver-*` shim binaries enable this)
+
+Place all raw library dependencies (`ratatui`, `crossterm`, `sysinfo`,
+`winreg`, `rusqlite`, etc.) under optional dependencies and gate them
+with the feature flags above.
+
+---
+
+## 🛠️ Cross-platform standards
 
 `library` supports both **Windows** and **Linux** targets.
-- Ensure that any code utilizing raw system APIs (such as Win32 or Linux `/sys`/`/proc`) has appropriate `#[cfg(target_os = "...")]` guard rails.
-- Provide clean cross-platform fallbacks or stubs for other operating systems to prevent compilation failures.
+
+- Code that uses raw system APIs (Win32 or Linux `/sys`/`/proc`)
+  must have appropriate `#[cfg(target_os = "...")]` guards.
+- Provide clean cross-platform fallbacks or stubs for other
+  operating systems to prevent compilation failures.
 
 ---
 
-## 🧪 Testing Guidelines
+## 🧪 Testing guidelines
 
 Every new module or helper must include unit tests.
 
-### Running Tests
-Run the entire test suite across all features and targets before submitting a pull request:
-```bash
-cargo test --all-features
-```
+### Running tests
 
-Verify that compilation passes under all workspace configurations:
 ```bash
+# Test with the default feature set
+cargo test
+
+# Test with all features enabled
+cargo test --all-features
+
+# Verify compilation under all feature combinations
 cargo check --all-targets --all-features
 ```
 
+The library currently has 100+ tests across the `design_facade`,
+`taxonomy_compliance`, `sys_info_tests`, and per-module unit tests.
+The chrome module has 29 of those.
+
 ---
 
-## 📥 Pull Request Process
+## 📥 Pull request process
 
-1. **Fork & Branch**: Create a feature branch from `main`.
-2. **Implement**: Write code conforming to the taxonomy, add docstrings, and implement tests.
-3. **Audit**: Run cargo checks and tests.
-4. **Document**: Update the [CHANGELOG.md](file:///C:/Users/jeryd/Synology/Home/Projects/local76/library/CHANGELOG.md) under the `[Unreleased]` section if making any user-facing API changes.
-5. **Submit**: Create a PR targeting `main` at `https://github.com/local76/library/pulls`.
+1. **Fork & branch**: Create a feature branch from `main`.
+2. **Implement**: Write code that follows the 4-folder classification,
+   add docstrings, and implement tests.
+3. **Audit**: Run `cargo check --all-targets --all-features` and
+   `cargo test --all-features`.
+4. **Document**: Update the [CHANGELOG.md](CHANGELOG.md) under the
+   `[Unreleased]` section for any user-facing API changes.
+5. **Submit**: Create a PR targeting `main` at
+   `https://github.com/local76/library/pulls`.

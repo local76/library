@@ -2,7 +2,7 @@
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 //!
-//! Reusable system formatting utilities for display in terminal/TUI dashboards.
+//! Reusable system formatting utilities for display in terminal dashboards.
 //!
 //! # Examples
 //!

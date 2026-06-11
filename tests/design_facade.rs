@@ -21,12 +21,12 @@ use library::ui::text::{wrap_text, char_width};
 use library::ui::effects::{
     FallingGlyphs, FlowingParticles, PulledParticles, FallingDroplets,
     RisingFlames, FallingComets, PulsingGlyphs, PulsingWaves,
-    FlowingBlocks, PulledBlocks, RisingGlyphs, PulsingParticles, TuiEffect,
+    FlowingBlocks, PulledBlocks, RisingGlyphs, PulsingParticles, Effect,
 };
 use library::core::logo_block::render_logo_block;
 
 // The 4.0 unified design system targets a 100x35 minimum canvas for all
-// r* TUIs (see library::apps::tui_bootstrap SetSize comment). These
+// See library::apps::bootstrap SetSize comment. These
 // constants were previously in `interface::app::constants`, which was
 // removed in the 4.2 flat-tree restructure; the test now inlines them.
 const MIN_TERMINAL_WIDTH: u16 = 100;
@@ -171,7 +171,7 @@ fn facade_text_wrap_handles_ascii_and_wide() {
 fn facade_all_effects_construct_at_80x24() {
     let (c, r) = (80usize, 24usize);
     let mut grid = vec![library::core::TerminalCell::default(); c * r];
-    let mut effects: Vec<Box<dyn TuiEffect>> = vec![
+    let mut effects: Vec<Box<dyn Effect>> = vec![
         Box::new(FallingGlyphs::new(c, r, 0.35)),
         Box::new(FlowingParticles::new(c, r)),
         Box::new(PulledParticles::new(c, r)),

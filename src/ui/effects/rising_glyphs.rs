@@ -3,7 +3,7 @@
 //! Characters rising from a heat source at the bottom, fading as they ascend.
 //! Like text drifting up off a fire. Default style: `Trailing`. Default palette: `Heat`.
 //!
-//! Classification: Interface (TUI) + Role (Application).
+//! Classification: Interface (console) + Role (Application).
 
 use crate::core::{LcgRng, TerminalCell};
 use super::dimensions::{Density, Palette, Speed, Style, resolve_color};

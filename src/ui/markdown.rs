@@ -1,6 +1,6 @@
 //! Markdown parser and renderer widgets for ratatui TUIs.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer).
+//! **Taxonomy Classification**: Interface (Presentation Layer).
 
 use ratatui::{
     Frame,
@@ -10,13 +10,13 @@ use ratatui::{
 };
 use super::theme::ThemeColors;
 
-/// A lightweight, custom terminal markdown parser returning styled TUI Spans and Lines.
+/// A lightweight, custom terminal markdown parser returning styled console Spans and Lines.
 pub fn parse_markdown_to_lines(content: &str, theme: &ThemeColors) -> Vec<Line<'static>> {
     let mut lines = Vec::new();
     let mut in_code_block = false;
     let mut current_paragraph = String::new();
 
-    // Helper closure to flush the accumulated paragraph text to a single TUI line.
+    // Helper closure to flush the accumulated paragraph text to a single console line.
     let flush_paragraph = |para: &mut String, lines: &mut Vec<Line<'static>>| {
         if !para.is_empty() {
             lines.push(Line::from(Span::styled(

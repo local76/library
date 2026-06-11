@@ -1,9 +1,9 @@
 //! Terminal-too-small layout guard widget for ratatui TUIs.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer).
+//! **Taxonomy Classification**: Interface (Presentation Layer).
 //!
 //! Renders a centered warning modal when the terminal is below the minimum required
-//! dimensions. Shared by all r* TUIs that target a 100x35 minimum canvas.
+//! dimensions. Shared by all console apps that target a 100x35 minimum canvas.
 
 use ratatui::{
     Frame,

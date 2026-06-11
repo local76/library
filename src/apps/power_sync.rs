@@ -1,9 +1,9 @@
-﻿//! Power-status and theme-status throttled poller for TUI render loops.
+﻿//! Power-status and theme-status throttled poller for render loops.
 //!
 //! **Taxonomy Classification**: Execution State (Lifecycle - Foreground) + Platform (Native).
 //!
 //! Encapsulates the ~30-line "every 5s check battery, every 2.5s check theme, double
-//! tick rate when on battery" boilerplate that lives in every r* TUI's main loop.
+//! tick rate when on battery" boilerplate that lives in every r* app's main loop.
 //!
 //! Returns a platform-neutral (R,G,B) accent color so this module does not need
 //! the `ratatui` crate directly. Callers convert to `ratatui::style::Color` themselves.

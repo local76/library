@@ -1,8 +1,8 @@
 //! F1..F7 documentation bindings + lookup helpers.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Chrome Layer).
+//! **Taxonomy Classification**: Interface (Chrome Layer).
 //!
-//! The 5 TUI apps (pulse, helm, scout, ignite, trance) all expose a markdown
+//! The 5 apps (pulse, helm, scout, ignite, trance) all expose a markdown
 //! viewer bound to F1..F7 opening README, SUPPORT, LICENSE, COPYRIGHT,
 //! PRIVACY, SECURITY, CONTRIBUTING respectively. The actual `include_str!`
 //! of those 7 files happens in each app (the files live in each app's repo
@@ -52,6 +52,14 @@ pub fn is_doc_f_key(code: KeyCode) -> Option<&'static str> {
 /// migration required.
 pub fn open_embedded_markdown(code: KeyCode) -> Option<&'static str> {
     is_doc_f_key(code)
+}
+
+/// Look up a doc filename by exact name. Returns None if `name` is not in
+/// the F1..F7 list. This is the helper the 5 apps' `keys.rs` files use to
+/// avoid duplicating the `DOC_FILES` array (Library helper for the B7
+/// cross-crate drift fix).
+pub fn doc(name: &str) -> Option<&'static str> {
+    DOC_FILES.iter().find(|&&f| f == name).copied()
 }
 
 #[cfg(test)]

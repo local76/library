@@ -1,6 +1,6 @@
 //! Layout and positioning utility helpers for ratatui TUIs.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer).
+//! **Taxonomy Classification**: Interface (Presentation Layer).
 
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},

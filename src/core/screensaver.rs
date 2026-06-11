@@ -1,32 +1,18 @@
-//! Unified `Screensaver` trait, ratatui-free, for r* TUI effects + GDI screensaver effects.
+//! Unified `Screensaver` trait, ratatui-free.
 //!
-//! **Taxonomy Classification**: Core (neutral foundation).
-//!
-//! This module is the single source of truth for the screensavers used across
-//! the apps suite:
-//!
-//! - r* TUI apps (pulse, trance, template, helm) that drive effects in
-//!   a ratatui/buffer-managed loop via `interface::app::screensaver::ScreensaverRenderer`.
-//! - r* screensaver apps (trance-scenes: cosmos, gnats, glyphs, flame, ...)
-//!   that drive the same effects in a GDI/fullscreen pixel loop without ratatui.
+//! This module is the single source of truth for the screensaver trait used
+//! by the 10 screensaver shim binaries and the 12 in-app effects.
 //!
 //! # What's here vs. what's not
 //!
-//! - `Screensaver` / `ScreensaverState` traits live
-//!   **here** (Core) because they depend only on `TerminalCell` (also Core)
-//!   and `std::time::Duration`. They are backend-agnostic.
+//! - `Screensaver` / `ScreensaverState` traits live **here** (Core) because
+//!   they depend only on `TerminalCell` (also Core) and `std::time::Duration`.
+//!   They are backend-agnostic.
 //! - `ScreensaverRenderer` (the buffer-management helper that produces
-//!   `[TerminalCell]` grids for ratatui) stays in
-//!   `interface::app::screensaver` because it is a TUI-layer concern.
-//! - All other r* effects (`FallingGlyphs`, `RisingFlames`, etc.) live in
-//!   `interface::app::effects` and implement these traits.
-//!
-//! # Trait composition
-//!
-//! `Screensaver` is a single trait with `init`/`update`/`draw`/`has_scanlines`.
-//! This is a direct drop-in replacement for the pre-4.0 library trait AND the
-//! pre-4.0 trance-scenes `trance_core::Screensaver` trait, so all consumers
-//! migrate by simply changing the import path.
+//!   `[TerminalCell]` grids for ratatui) lives in
+//!   `ui::screensaver_renderer`.
+//! - The 12 in-app effects (`FallingGlyphs`, `RisingFlames`, etc.) live in
+//!   `ui::effects` and implement this trait.
 //!
 //! `ScreensaverState` is provided as a **convenience sub-trait** for code
 //! that wants to track just the active/focus flags without implementing the
@@ -46,7 +32,7 @@ use crate::core::TerminalCell;
 /// A trait representing a screensaver/effect with a structured lifecycle.
 ///
 /// In library 4.0 this is the single backend-agnostic entry point for
-/// both r* TUI apps (ratatui/buffer-managed) and r* GDI screensaver apps
+/// both console apps (ratatui/buffer-managed) and r* GDI screensaver apps
 /// (trance-scenes). Direct drop-in for the pre-4.0 library trait AND the
 /// pre-4.0 trance-scenes `trance_core::Screensaver` trait.
 ///
@@ -58,10 +44,10 @@ use crate::core::TerminalCell;
 /// - `Box<dyn Screensaver>` automatically satisfies the renderer bound
 ///   (`ScreensaverRenderer::tick_duration<S: Screensaver + ?Sized>`) without
 ///   the consumer having to write `Box<dyn Screensaver + ScreensaverState>`.
-/// - Effects that don't care about focus/active state (most r* TUI effects)
+/// - Effects that don't care about focus/active state (most console app effects)
 ///   don't have to implement `ScreensaverState` at all.
 /// - Effects that DO want focus/active control (r* GDI screensaver apps,
-///   some r* TUI effects) can override the default `active`/`focused` to
+///   some console app effects) can override the default `active`/`focused` to
 ///   read from an internal field.
 ///
 /// This is a deliberate departure from the pre-4.0 split-traits design
@@ -83,7 +69,7 @@ pub trait Screensaver: ScreensaverState {
     /// top of the drawn cells. Default: `false`.
     ///
     /// r* GDI screensaver apps (trance-scenes) have always drawn scanlines
-    /// separately; r* TUI apps typically don't. Returning `true` is opt-in.
+    /// separately; console apps typically don't. Returning `true` is opt-in.
     fn has_scanlines(&self) -> bool {
         false
     }
@@ -110,7 +96,7 @@ pub trait ScreensaverState {
 /// default-true active/focused and no-op setters. Effects that want
 /// real state tracking override this in their own `impl ScreensaverState`
 /// block — but that block would then conflict with the blanket.
-/// **Workaround for the library 4.0 effects**: the 12 TUI effects do NOT
+/// **Workaround for the library 4.0 effects**: the 12 console effects do NOT
 /// override `ScreensaverState` (their private `active`/`focused` fields
 /// are now inert; the renderer treats them as always-on). Effects that
 /// need real focus/active control should expose their own state via a

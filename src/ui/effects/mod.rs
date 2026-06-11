@@ -1,7 +1,5 @@
 ﻿//! Retro terminal effects, games, and visual primitives.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer) + Role (Application Software).
-//!
 //! # Effect Naming
 //!
 //! All effects follow a **Verb × Noun × Style × Palette** taxonomy:
@@ -24,17 +22,17 @@ pub mod dimensions;
 
 pub use dimensions::{accent_color, heat_color, resolve_color, Density, Direction, Palette, Speed, Style};
 
-/// Trait representing a standard TUI-based visual effect.
+/// Trait representing a standard visual effect.
 /// Can be used to dynamically run or swap screensavers/effects.
-pub trait TuiEffect {
+pub trait Effect {
     /// Update the physics / logic of the effect.
     fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize);
     /// Draw the visual elements of the effect into a TerminalCell grid.
     fn draw(&mut self, grid: &mut [TerminalCell], cols: usize, rows: usize);
 }
 
-/// Blanket implementation: any type implementing Screensaver automatically implements TuiEffect.
-impl<T: Screensaver> TuiEffect for T {
+/// Blanket implementation: any type implementing Screensaver automatically implements Effect.
+impl<T: Screensaver> Effect for T {
     fn update(&mut self, dt: std::time::Duration, cols: usize, rows: usize) {
         <Self as Screensaver>::update(self, dt, cols, rows);
     }
@@ -145,9 +143,9 @@ mod tests {
         Duration::from_secs_f32(secs)
     }
 
-    // 4.0 note: the library 12 TUI effects all use the default
+    // The 12 library effects all use the default
     // `ScreensaverState` blanket impl, so `set_active(false)` is a no-op
-    // and the physics always runs. To pause an effect in 4.0, wrap it in
+    // and the physics always runs. To pause an effect, wrap it in
     // a `StatefulScreensaver` (future API). For the 12 library effects,
     // we test that update is idempotent on no-op `set_active` calls.
     #[test]
@@ -162,10 +160,10 @@ mod tests {
         assert!(!rain.drops.is_empty());
     }
 
-    // 4.0 note: the library 12 TUI effects all use the default
-    // `ScreensaverState` blanket impl. `TuiEffect::draw` always writes
-    // cells. The pre-4.0 "inactive == empty grid" behavior moved to the
-    // library 4.0 `ScreensaverRenderer` (which skips the draw + dim path
+    // The 12 library effects all use the default
+    // `ScreensaverState` blanket impl. `Effect::draw` always writes
+    // cells. The "inactive == empty grid" behavior lives in
+    // `ScreensaverRenderer` (which skips the draw + dim path
     // when `active`/`focused` are false). The 12 library effects' `draw`
     // methods always render. This test just confirms no panic.
     #[test]
@@ -173,24 +171,24 @@ mod tests {
         let mut grid = vec![TerminalCell::default(); 50];
 
         let mut rain = FallingGlyphs::new(10, 5, 0.5);
-        TuiEffect::draw(&mut rain, &mut grid, 10, 5);
+        Effect::draw(&mut rain, &mut grid, 10, 5);
 
         let mut fire = RisingFlames::new(10, 5);
-        TuiEffect::draw(&mut fire, &mut grid, 10, 5);
+        Effect::draw(&mut fire, &mut grid, 10, 5);
 
         let mut parts = FlowingParticles::new(10, 5);
-        TuiEffect::draw(&mut parts, &mut grid, 10, 5);
+        Effect::draw(&mut parts, &mut grid, 10, 5);
 
         let mut rain_effect = FallingDroplets::new(10, 5);
-        TuiEffect::draw(&mut rain_effect, &mut grid, 10, 5);
+        Effect::draw(&mut rain_effect, &mut grid, 10, 5);
 
         let mut gravity = PulledParticles::new(10, 5);
-        TuiEffect::draw(&mut gravity, &mut grid, 10, 5);
+        Effect::draw(&mut gravity, &mut grid, 10, 5);
     }
 
     #[test]
-    fn test_effects_4_0_default_active() {
-        // 4.0: the default `ScreensaverState` blanket gives `active() = true`
+    fn test_effects_default_active() {
+        // The default `ScreensaverState` blanket gives `active() = true`
         // for every Screensaver. Verify the 5 canonical effects report true.
         assert!(FallingGlyphs::new(5, 3, 0.3).active());
         assert!(RisingFlames::new(4, 3).active());
@@ -199,25 +197,20 @@ mod tests {
         assert!(FallingComets::new(5, 3).active());
     }
 
-    // 4.0 note: this test is obsolete. The 12 library TUI effects all
-    // use the default `ScreensaverState` blanket impl, so
-    // `set_active(false)` is a no-op and the effects always render. The
-    // "inactive = empty grid" behavior moved to `ScreensaverRenderer`
+    // The 12 library effects all use the default `ScreensaverState` blanket
+    // impl, so `set_active(false)` is a no-op and the effects always render.
+    // The "inactive = empty grid" behavior lives in `ScreensaverRenderer`
     // (which clears the grid when the saver reports `active = false`).
-    // Kept as a no-op marker test for one minor release.
-    #[allow(deprecated)]
+    // Kept as a no-op marker test.
     #[test]
-    fn test_effects_inactive_rendering_is_empty_4_0_obsolete() {
-        // No assertion; just confirms the effects compile and don't panic
-        // under the 4.0 default-active behavior.
+    fn test_effects_inactive_rendering_is_empty_obsolete() {
         let cols = 10;
         let rows = 5;
         let mut grid = vec![TerminalCell::default(); cols * rows];
         let mut eff = FallingGlyphs::new(cols, rows, 0.5);
         eff.update(dt(0.1), cols, rows);
         eff.set_active(false);
-        TuiEffect::draw(&mut eff, &mut grid, cols, rows);
-        // 4.0: grid is no longer expected to be empty (renderer is responsible).
+        Effect::draw(&mut eff, &mut grid, cols, rows);
     }
 
     #[test]

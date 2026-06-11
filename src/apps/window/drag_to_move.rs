@@ -1,8 +1,8 @@
-//! Window drag-to-move helper for borderless console TUIs.
+//! Window drag-to-move helper for borderless console apps.
 //!
 //! **Taxonomy Classification**: Execution State (Lifecycle - Foreground) + Platform (Native).
 //!
-//! Encapsulates the 30-line mouse-drag block in every r* TUI: when the user clicks
+//! Encapsulates the 30-line mouse-drag block in every r* console: when the user clicks
 //! within row 0..=2 of the title bar, capture cursor + window rect as the drag origin;
 //! on each Drag event, compute the delta and call `set_window_pos`.
 

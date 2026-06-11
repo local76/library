@@ -3,7 +3,7 @@
 //! Shooting-star streaks: long bright trails moving diagonally downward.
 //! Default style: `Trailing`. Default palette: `Monochrome(White)`.
 //!
-//! Classification: Interface (TUI) + Role (Application).
+//! Classification: Interface (console) + Role (Application).
 
 use std::cell::RefCell;
 use crate::core::{LcgRng, TerminalCell};

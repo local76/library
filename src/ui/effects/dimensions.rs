@@ -1,6 +1,6 @@
-﻿//! Visual dimensions for TUI effects.
+﻿//! Visual dimensions for console effects.
 //!
-//! **Taxonomy Classification**: Interface (TUI) configuration. Used by all
+//! **Taxonomy Classification**: Interface (console) configuration. Used by all
 //! effects in `interface::app::effects` to standardize their render treatment
 //! and color source.
 //!
@@ -40,7 +40,7 @@ fn query_accent_color_platform() -> (u8, u8, u8) {
     (0, 120, 215)
 }
 
-/// Render treatment for individual cells/elements of a TUI effect.
+/// Render treatment for individual cells/elements of a console effect.
 ///
 /// All values are mutually exclusive — an effect uses exactly one style.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -56,7 +56,7 @@ pub enum Style {
     Flared,
 }
 
-/// Color source for a TUI effect.
+/// Color source for a console effect.
 ///
 /// The color returned by [`resolve_color`] depends on the variant and a
 /// `t` parameter (typically 0.0..=1.0, e.g. position along a trail, age,

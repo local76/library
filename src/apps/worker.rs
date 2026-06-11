@@ -6,7 +6,7 @@ use std::sync::mpsc::Sender;
 use std::thread;
 use std::time::Duration;
 
-/// Events emitted by background worker threads to notify the TUI main loop.
+/// Events emitted by background worker threads to notify the main loop.
 #[derive(Debug, Clone)]
 pub enum WorkerEvent {
     /// Reports fractional progress (0.0 to 1.0) of a background task.

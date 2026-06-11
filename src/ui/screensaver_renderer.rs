@@ -1,13 +1,13 @@
 //! Ratatui-flavored wrapper around the unified [`Screensaver`](crate::core::screensaver::Screensaver) trait.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer).
+//! **Taxonomy Classification**: Interface (Presentation Layer).
 //!
 //! In library 4.0, `Screensaver` / `ScreensaverState` / `ScreensaverEffect`
 //! moved to [`crate::core::screensaver`]. They are now backend-agnostic and
-//! can be implemented by both r* TUI apps and r* GDI screensaver apps
+//! can be implemented by both console apps and r* GDI screensaver apps
 //! (trance-scenes).
 //!
-//! What stays here is `ScreensaverRenderer`: a TUI-layer helper that owns a
+//! What stays here is `ScreensaverRenderer`: a console-layer helper that owns a
 //! `[TerminalCell]` grid buffer and runs the active/focus lifecycle for a
 //! ratatui consumer.
 //!
@@ -173,7 +173,7 @@ mod tests {
 
     // 4.0 note: the unfocused-dimming and inactive-skip-update behaviors
     // moved into a separate `StatefulScreensaver` wrapper (a future API
-    // addition). The 12 library TUI effects all use the 4.0 default
+    // addition). The 12 library console effects all use the 4.0 default
     // `active=true`/`focused=true` path, which is what these regression
     // tests now assert.
     #[test]

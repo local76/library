@@ -15,31 +15,47 @@ pub const EVENT_ID_USER_ACTION: u32 = 1000;
 /// or the Syslog daemon socket (on Linux).
 pub fn log_system_event(source_name: &str, event_type: u16, event_id: u32, message: &str) {
     #[cfg(all(target_os = "windows", feature = "event-log"))]
-    unsafe {
-        let source_w: Vec<u16> = source_name
-            .encode_utf16()
-            .chain(std::iter::once(0))
-            .collect();
-        let handle = windows_sys::Win32::System::EventLog::RegisterEventSourceW(
-            std::ptr::null(),
-            source_w.as_ptr(),
-        );
-        if !handle.is_null() {
-            let message_w: Vec<u16> = message.encode_utf16().chain(std::iter::once(0)).collect();
-            let strings: [*const u16; 1] = [message_w.as_ptr()];
+    {
+        use windows_sys::Win32::System::EventLog::{
+            RegisterEventSourceW, ReportEventW, DeregisterEventSource,
+        };
 
-            windows_sys::Win32::System::EventLog::ReportEventW(
-                handle,
-                event_type,
-                0, // category
-                event_id,
-                std::ptr::null_mut(), // user sid
-                1,                    // num strings
-                0,                    // data size
-                strings.as_ptr(),
-                std::ptr::null_mut(), // raw data
+        let source_w: Vec<u16> = source_name.encode_utf16()
+            .chain(std::iter::once(0)).collect();
+        let handle = unsafe { RegisterEventSourceW(std::ptr::null(), source_w.as_ptr()) };
+
+        if handle.is_null() {
+            // Surface the failure in the file log so the operator can
+            // see WHY the event was dropped (almost always: source not
+            // registered with wevtutil im).
+            let err = std::io::Error::last_os_error();
+            crate::apps::file_log::log_message(
+                "WARNING",
+                &format!(
+                    "EventLog::RegisterEventSourceW({}) failed: OS error {}",
+                    source_name, err
+                ),
             );
-            windows_sys::Win32::System::EventLog::DeregisterEventSource(handle);
+            return;
+        }
+
+        let message_w: Vec<u16> = message.encode_utf16().chain(std::iter::once(0)).collect();
+        let strings: [*const u16; 1] = [message_w.as_ptr()];
+
+        let ok = unsafe {
+            ReportEventW(handle, event_type, 0, event_id,
+                         std::ptr::null_mut(), 1, 0,
+                         strings.as_ptr(), std::ptr::null_mut())
+        };
+        unsafe { DeregisterEventSource(handle); }
+
+        if ok == 0 {
+            let err = std::io::Error::last_os_error();
+            crate::apps::file_log::log_message(
+                "WARNING",
+                &format!("EventLog::ReportEventW({}) failed: OS error {}",
+                         source_name, err),
+            );
         }
     }
     #[cfg(all(target_os = "windows", not(feature = "event-log")))]

@@ -1,9 +1,9 @@
 //! Status bar with automatic decay timer for ratatui TUIs.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer).
+//! **Taxonomy Classification**: Interface (Presentation Layer).
 //!
 //! Encapsulates the 4-second "press Tab to cycle focus" reset pattern duplicated across
-//! every r* TUI's `App` struct.
+//! every console app's `App` struct.
 
 use std::time::{Duration, Instant};
 

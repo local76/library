@@ -180,30 +180,60 @@ pub fn count_native() -> usize {
     count
 }
 
-pub fn count_winget() -> usize {
-    #[cfg(all(windows, feature = "winget"))]
-    {
-        if let Ok(local_appdata) = std::env::var("LOCALAPPDATA") {
-            let db_path = Path::new(&local_appdata)
-                .join("Packages")
-                .join("Microsoft.DesktopAppInstaller_8wekyb3d8bbwe")
-                .join("LocalState")
-                .join("Microsoft.Winget.Source_8wekyb3d8bbwe")
-                .join("installed.db");
+#[cfg(all(windows, feature = "winget"))]
+pub fn count_winget_with_staleness() -> std::result::Result<(usize, std::time::Duration), String> {
+    use rusqlite::{Connection, OpenFlags};
+    use std::time::{SystemTime, UNIX_EPOCH};
 
-            if db_path.exists() {
-                use rusqlite::{Connection, OpenFlags};
-                if let Ok(conn) = Connection::open_with_flags(&db_path, OpenFlags::SQLITE_OPEN_READ_ONLY) {
-                    if let Ok(count) = conn.query_row("SELECT COUNT(*) FROM manifest", [], |row| {
-                        row.get::<_, usize>(0)
-                    }) {
-                        return count;
-                    }
-                }
+    let local_appdata = std::env::var("LOCALAPPDATA").map_err(|e| e.to_string())?;
+    let db_path = std::path::Path::new(&local_appdata)
+        .join("Packages")
+        .join("Microsoft.DesktopAppInstaller_8wekyb3d8bbwe")
+        .join("LocalState")
+        .join("Microsoft.Winget.Source_8wekyb3d8bbwe")
+        .join("installed.db");
+
+    if !db_path.exists() {
+        return Err("winget installed.db not present".into());
+    }
+
+    // NOMUTEX = 0x08000 -> we don't fight winget for the write lock.
+    // 5s busy_timeout is winget's own default; this avoids SQLITE_BUSY.
+    let flags = OpenFlags::SQLITE_OPEN_READ_ONLY
+              | OpenFlags::SQLITE_OPEN_NO_MUTEX;
+    let conn = Connection::open_with_flags(&db_path, flags).map_err(|e| e.to_string())?;
+    conn.busy_timeout(std::time::Duration::from_secs(5)).ok();
+
+    // Approximate: counts manifest rows, which is what the old code did.
+    // The caller is responsible for labeling this "approximate" in the UI.
+    let count: usize = conn
+        .query_row("SELECT COUNT(*) FROM manifest", [], |r| r.get(0))
+        .map_err(|e| e.to_string())?;
+
+    // Winget's installed.db is mtime-tracked; surface how stale the read was.
+    let mtime = std::fs::metadata(&db_path)
+        .and_then(|m| m.modified())
+        .unwrap_or(UNIX_EPOCH);
+    let staleness = SystemTime::now().duration_since(mtime).unwrap_or_default();
+    Ok((count, staleness))
+}
+
+pub fn count_winget() -> usize {
+    static CACHE: std::sync::Mutex<Option<(std::time::Instant, usize)>> =
+        std::sync::Mutex::new(None);
+    let now = std::time::Instant::now();
+    if let Ok(g) = CACHE.lock() {
+        if let Some((t, v)) = *g {
+            if now.duration_since(t) < std::time::Duration::from_secs(60) {
+                return v;
             }
         }
     }
-    0
+    let v = count_winget_with_staleness().map(|(c, _)| c).unwrap_or(0);
+    if let Ok(mut g) = CACHE.lock() {
+        *g = Some((now, v));
+    }
+    v
 }
 
 pub fn count_dpkg() -> usize {
@@ -362,14 +392,30 @@ pub static PACKAGE_MANAGERS: &[PackageManager] = &[
 /// Classification: Role (Application) + Platform (Native).
 /// Ported from helm. Useful for TUIs, CLIs, and dashboards.
 pub fn get_packages_breakdown() -> String {
-    static CACHE: std::sync::Mutex<Option<(std::time::Instant, String)>> = std::sync::Mutex::new(None);
-    let mut lock = CACHE.lock().unwrap();
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    static CACHE: std::sync::Mutex<Option<(std::time::Instant, String)>> =
+        std::sync::Mutex::new(None);
+
+    // Poison-resilient lock acquisition: we never want a single past panic
+    // to permanently disable the dashboard.
+    let mut lock = CACHE.lock().unwrap_or_else(|e| e.into_inner());
+
     if let Some((last_updated, val)) = &*lock {
         if last_updated.elapsed() < std::time::Duration::from_millis(5000) {
             return val.clone();
         }
     }
-    let val = get_packages_breakdown_uncached();
+
+    // Catch unwind so a panic in the slow path (e.g. a bad format! in
+    // packages.rs) does NOT poison the mutex.
+    let val = match catch_unwind(AssertUnwindSafe(get_packages_breakdown_uncached)) {
+        Ok(v) => v,
+        Err(_) => {
+            // Return the last known good value if we have one; otherwise
+            // a sentinel that the UI can detect.
+            if let Some((_, prev)) = lock.take() { prev } else { "0 apps".into() }
+        }
+    };
     *lock = Some((std::time::Instant::now(), val.clone()));
     val
 }

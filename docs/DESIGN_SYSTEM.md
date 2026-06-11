@@ -1,51 +1,53 @@
-# library Design System (4.0+)
+# library Design System
 
-> The single source of truth for the visual identity of every app in the local76 ecosystem.
+> The single source of truth for the visual identity of every app in
+> the local76 ecosystem.
 
-The `library` 4.0+ design system is the single source of truth for the visual identity of every local76 app — TUI tools, screensaver shims, and future CLI / native UI consumers:
-
-- **TUI apps** (`helm`, `pulse`, `scout`, `trance`, `ignite`) — Ratatui/buffer-managed, drive effects through `ScreensaverRenderer`.
-- **Screensaver apps** (`screensavers`: `beams`, `bounce`, `flame`, `gnats`, `bursts`, `cosmos`, `glyphs`, `disco`, `storm`, `chaos`) — GDI / fullscreen pixel loop, share the same `Screensaver` trait.
-- **Future apps** (CLI tools, native UIs) — same building blocks, layered per the 4-layer taxonomy.
-
-This document describes the design system from an app author's point of view. For the underlying architectural rationale, see [`ARCHITECTURE.md`](../ARCHITECTURE.md).
+The design system in `library::ui::*` is a flat set of widgets that
+every local76 app (helm, pulse, scout, trance, ignite) and every
+screensaver shim binary (beams, bounce, …) uses. This document
+describes the design system from an app author's point of view. For
+the underlying architectural rationale, see
+[`ARCHITECTURE.md`](../ARCHITECTURE.md).
 
 ---
 
-## Single import path
+## Widget surface
 
-Every local76 TUI app imports its UI from this one path:
+There is no single `use library::ui::*;` prelude. Import the widgets
+you need from `library::ui::<widget>`. The full set:
 
 ```rust
-use library::interface::tui::design::prelude::*;
+use library::ui::theme::{ThemeColors, get_theme, accent_color_from_hex, current_theme};
+use library::ui::layout::centered_rect;
+use library::ui::layout_guard::{is_too_small, render_too_small_warning, MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT};
+use library::ui::text::{wrap_text, align_line, char_width, visible_len, visible_split, TextAlignment};
+use library::ui::status_bar::StatusBar;
+use library::ui::toast::{ToastBox, ToastKind};
+use library::ui::markdown::{parse_markdown_to_lines, draw_markdown_modal, embedded_docs};
+use library::ui::markdown_viewer::MarkdownViewerState;
+use library::ui::title_banner::{draw_title_banner, ButtonRect};
+use library::ui::mouse_selection::MouseSelection;
+use library::ui::effect_preview::draw_effect_preview;
+use library::ui::screensaver_renderer::{Screensaver, ScreensaverRenderer, ScreensaverState};
+use library::ui::effects::{FallingGlyphs, FlowingParticles, /* ... 10 more ... */ Effect};
 ```
 
-This brings in:
-
-- `ThemeColors`, `get_theme`, `accent_color_from_hex`
-- `AccentColors`, `AccentTheme`
-- `StatusBar`, `ToastBox`, `ToastKind`
-- `MarkdownViewerState`, `parse_markdown_to_lines`, `draw_markdown_modal`
-- `is_too_small`, `render_too_small_warning`
-- `draw_title_banner`, `ButtonRect`, `MouseSelection`
-- `draw_effect_preview`, `centered_rect`, `format_help_row`
-- `wrap_text`, `align_line`, `char_width`, `visible_len`, `visible_split`, `TextAlignment`
-- `MIN_TERMINAL_WIDTH`, `MIN_TERMINAL_HEIGHT`
-- All 10 canonical TUI effects (`FallingGlyphs`, `RisingFlames`, ...)
-- `Screensaver`, `ScreensaverState`, `ScreensaverRenderer`, `TuiEffect`, `render_logo_block`
-
-If you only need widgets (no effects), use `library::interface::tui::design_widgets_only::*` (no `effects` feature required). For most apps, the full `design::prelude` is the right choice.
+The 12 in-app effects (`FallingGlyphs`, `FlowingParticles`, etc.) are
+gated on the `effects` Cargo feature. Everything else in `ui` is
+gated on `widgets`.
 
 ---
 
 ## Color story
 
-The 4.0+ color story is centered on the **system accent** + a derived `ScreenPalette`. Every local76 app pulls the same canonical palette and gets a visually consistent identity out of the box.
+The color story is centered on the **system accent** + a derived
+`ScreenPalette`. Every local76 app pulls the same canonical palette
+and gets a visually consistent identity out of the box.
 
 ```rust
-use library::role::application::palette::{query_current_palette, ScreenPalette};
+use library::core::screen_palette::{query_current_palette, ScreenPalette};
 
-// Cached, cross-platform, falls back to local76 cyan on non-Windows.
 let palette: ScreenPalette = query_current_palette();
 
 let bg      = palette.bg;      // (0,0,0) in dark mode
@@ -58,19 +60,22 @@ let mid     = palette.mid;     // (128,128,128) neutral chrome
 let peak    = palette.peak;    // (255,255,255) hot peaks
 ```
 
-`ScreenPalette` is `role::application`-scoped (backend-agnostic) and uses plain RGB tuples, so it works in both Ratatui `Color::Rgb` and GDI pixel renderers. The same palette is used by `helm`'s TUI border, `cosmos`'s GDI particles, and `gnats`'s color story — they are all the same color.
+`ScreenPalette` uses plain RGB tuples, so it works in both ratatui
+`Color::Rgb` and GDI pixel renderers. The same palette is used by
+every app's chrome and every screensaver scene.
 
-### TUI-typed palette
+### Typed palette (for the 12 in-app effects)
 
-For TUI effects, `dimensions::Palette` exposes the same color story in a Ratatui-friendly enum:
+For the 12 in-app effects, `library::ui::effects::dimensions::Palette`
+exposes the same color story in a ratatui-friendly enum:
 
 ```rust
-use library::interface::tui::effects::dimensions::Palette;
+use library::ui::effects::dimensions::Palette;
 
 let p = Palette::Accent;       // system accent
-let p = Palette::AccentDim;    // 35%-dimmed accent (matches ScreenPalette::dim)
-let p = Palette::AccentHot;    // +30° hue (matches ScreenPalette::hot)
-let p = Palette::AccentCool;   // -120° hue (matches ScreenPalette::cool)
+let p = Palette::AccentDim;    // 35%-dimmed accent
+let p = Palette::AccentHot;    // +30° hue
+let p = Palette::AccentCool;   // -120° hue
 let p = Palette::Heat;         // cold-to-hot ramp
 ```
 
@@ -78,186 +83,118 @@ let p = Palette::Heat;         // cold-to-hot ramp
 
 ## Onboarding: `helm`
 
-`helm` is the reference consumer. Its `main.rs` and `ui/mod.rs` show the canonical pattern:
+`helm` is the reference consumer. Its `main.rs` and `ui/mod.rs` show
+the canonical pattern:
 
 ```rust
-// crates/helm/src/main.rs
-use library::interface::tui::design::prelude::*;
-use library::lifecycle::background::file_log;
-use library::lifecycle::foreground::panic::set_tui_panic_hook;
-
-fn run_tui(args: CliArgs) -> io::Result<()> {
-    file_log::set_log_app_name("helm");
-    set_tui_panic_hook();
-    // ...
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    let mut config = Config::load_or_create();
-    // ...
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-    // ...
-    let theme = current_theme(&app);
-    // ...
-    terminal.draw(|f| ui::draw_ui(f, &mut app))?;
-}
-```
-
-`current_theme` is a 3-line helper:
-
-```rust
-fn current_theme(_app: &App) -> ThemeColors {
-    let accent = accent_color_from_hex(&win32::get_win_accent_color());
-    get_theme(win32::is_dark_mode(), accent)
-}
-```
-
-`ui::draw_ui` uses `ThemeColors` to style the rounded border, then delegates to `specs::generate_specs_lines` and `logos::get_colored_logo_lines` for the body. The status bar at the bottom is `app.status` (a `StatusBar`) which auto-resets to its default message after a 4-second decay.
-
-`App` holds a `MarkdownViewerState` (for F1-F7 help docs), a `MouseSelection` (for drag-to-select + clipboard), and the chrome state machine. There is **no hand-rolled markdown scroll / show-markdown triple** anywhere — `MarkdownViewerState` encapsulates it.
-
----
-
-## Onboarding: `screensavers`
-
-The 10 shim binaries in the [`screensavers`](https://github.com/local76/screensavers) workspace share the same `Screensaver` trait as the TUI effects. The GDI / fullscreen pixel loop is:
-
-```rust
-use std::time::Duration;
-use library::core::screensaver::Screensaver;
-use library::core::TerminalCell;
-use library::role::application::palette::{query_current_palette, ScreenPalette};
-
-pub fn current_palette() -> ScreenPalette {
-    query_current_palette()
-}
-
-pub struct Cosmos {
-    // ...
-}
-
-impl Screensaver for Cosmos {
-    fn update(&mut self, dt: Duration, _cols: usize, _rows: usize) {
-        let delta = dt.as_secs_f32().min(0.1);
-        // ...physics...
-    }
-
-    fn draw(&self, grid: &mut [TerminalCell], cols: usize, rows: usize) {
-        let palette = current_palette();
-        let accent = palette.accent;
-        // ...draw into grid using accent / hot / cool / mid colors...
-    }
-
-    fn has_scanlines(&self) -> bool { true }  // GDI CRT overlay
-}
-```
-
-Note the 4.0+ signature change: `update` takes `Duration` (was `f32` seconds in 3.x). The `dt.as_secs_f32()` cast in the body keeps the floating-point math unchanged.
-
-`current_palette()` lets every effect pull the same `ScreenPalette` that `helm` uses. Newer effects can migrate their hand-rolled HSL color math to `ScreenPalette::hot` / `ScreenPalette::cool` incrementally.
-
----
-
-## Onboarding: a typical TUI dashboard
-
-The 5 TUI apps follow the same pattern. A typical dashboard:
-
-```rust
-// src/main.rs
-use library::interface::tui::design::prelude::*;
+use library::apps::bootstrap::{Config, init, shutdown, is_app_shutting_down};
+use library::apps::panic::set_panic_hook;
+use library::apps::chrome::{is_quit_key, is_help_toggle_key, scroll_for_key};
+use library::apps::file_log;
 
 fn main() -> io::Result<()> {
-    set_tui_panic_hook();
-    enable_raw_mode()?;
-    let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
-    let mut app = App::new();
-    let theme = get_theme(query_dark_mode(), query_accent_color());
-    let mut renderer = ScreensaverRenderer::new(80, 24, 128);
-    let mut saver: Box<dyn Screensaver> = Box::new(FallingGlyphs::new(80, 24, 0.5));
-
+    file_log::set_log_app_name("app/helm");
+    set_panic_hook();
+    let config = Config::new("helm");
+    let (mut terminal, _guards) = init(config)?;
+    let theme = library::ui::theme::get_theme(
+        library::toolkit::sys_info::query_dark_mode(),
+        library::toolkit::sys_info::query_accent_color(),
+    );
+    // ...
     loop {
-        terminal.draw(|f| {
-            if is_too_small(f.area(), (MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT)) {
-                render_too_small_warning(f, f.area(), (f.area().width, f.area().height),
-                    (MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT), "pulse", theme.accent);
-                return;
-            }
-            draw_dashboard(f, &mut app, &theme, &mut saver, &mut renderer);
-        })?;
-        // ...event loop...
-        renderer.tick_duration(saver.as_mut(), Duration::from_millis(100));
+        terminal.draw(|f| ui::draw_ui(f, &mut app, &theme))?;
+        if !event::poll(Duration::from_millis(100))? { continue; }
+        let key = event::read()?;
+        if is_quit_key(key.code, key.modifiers) { break; }
+        if is_help_toggle_key(key.code) { app.show_help = !app.show_help; }
+        // ... app-specific handling
+        if is_app_shutting_down() { break; }
     }
+    shutdown(&mut terminal)?;
+    Ok(())
 }
 ```
 
-This gives you the same 100×35 layout-guard modal, the same 4-second-decay status bar, the same `Screensaver` trait on the screensaver, the same color story — all from one `use` statement.
+`Config` (from `library::apps::bootstrap`) is the configuration for
+`init()`. `init()` returns a `(Terminal, Guards)` pair — hold onto
+`Guards` until shutdown so the Drop impls restore terminal state.
+
+`app.show_help` triggers a `MarkdownViewerState` (for F1–F7 help
+docs). The `library::apps::chrome::open_embedded_markdown` helper
+maps a key code to a doc name and returns the embedded content.
 
 ---
 
-## 4.0+ module map
+## Onboarding: a screensaver shim binary
 
+The 10 `screensaver-<scene>` shim binaries share a single template:
+
+```rust
+// screensaver-beams/src/main.rs
+#![cfg_attr(
+    all(not(debug_assertions), target_os = "windows"),
+    windows_subsystem = "windows"
+)]
+
+mod beams;
+
+fn main() {
+    let effect = beams::Beams::new();
+    library::screensaver_runner::run_main(effect, "beams");
+}
 ```
-library::interface::tui::design
-├── theme           ThemeColors, get_theme, accent_color_from_hex
-├── colors          AccentColors, AccentTheme (3-color bundles)
-├── status          StatusBar (4-second decay pattern)
-├── toast           ToastBox, ToastKind
-├── markdown        parse_markdown_to_lines, draw_markdown_modal
-├── markdown_viewer MarkdownViewerState (F1-F7 state machine)
-├── layout_guard    is_too_small, render_too_small_warning
-├── title_banner    draw_title_banner, ButtonRect
-├── effect_preview  draw_effect_preview
-├── mouse_selection MouseSelection
-├── layout          centered_rect, format_help_row
-└── text            wrap_text, align_line, char_width, visible_len, ...
 
-library::interface::tui::design::prelude
-└── everything above + all 10 effects + Screensaver + ScreensaverRenderer
-
-library::core
-├── TerminalCell          (renderer-agnostic character cell)
-├── LcgRng                (canonical RNG for effects)
-├── SystemInfo / DashboardInfo
-├── hsl_to_rgb, rgb_to_hsl
-└── screensaver
-    ├── Screensaver       (single trait, init/update/draw/has_scanlines)
-    ├── ScreensaverState  (active/focused sub-trait)
-    └── ScreensaverEffect (deprecated trait alias, back-compat)
-
-library::role::application::palette
-└── ScreenPalette         (backend-agnostic RGB-tuple color story)
-    ├── from_system(accent, is_dark)  // canonical 4.0
-    ├── high_contrast(...)
-    ├── default_dark() / default_light()
-    └── query_current_palette()        // cross-platform helper
-```
+The scene module (`screensaver-beams/src/beams/`) implements
+`library::core::screensaver::Screensaver`. `run_main` parses CLI
+args, dispatches to the platform-specific render loop, and exits when
+the user closes the preview window.
 
 ---
 
-## 3.x → 4.0 migration cheatsheet
+## Effect naming: Verb × Noun × Style × Palette
 
-| 3.x path | 4.0+ path |
-|---|---|
-| `library::interface::tui::theme` | `library::interface::tui::design::theme` |
-| `library::interface::tui::markdown` | `library::interface::tui::design::markdown` |
-| `library::interface::tui::markdown_viewer` | `library::interface::tui::design::markdown_viewer` |
-| `library::interface::tui::layout` | `library::interface::tui::design::layout` |
-| `library::interface::tui::status` | `library::interface::tui::design::status` |
-| `library::interface::tui::text` | `library::interface::tui::design::text` |
-| `library::interface::tui::widgets` | `library::interface::tui::widgets` (kept for the Accent* widget family) |
-| `library::interface::tui::screensaver` | `library::core::screensaver` |
-| `fx.update(0.016, 80, 24)` (f32 seconds) | `fx.update(Duration::from_secs_f32(0.016), 80, 24)` |
-| `ScreensaverRenderer::tick(&mut s, 0.1)` (deprecated) | `ScreensaverRenderer::tick_duration(&mut s, Duration::from_secs_f32(0.1))` |
-| hand-rolled `(show_markdown, markdown_lines, markdown_scroll)` triple | `MarkdownViewerState` |
-| hand-rolled `is_dark_mode()` registry read | `library::platform::native::sys_info::query_dark_mode()` (cross-platform) |
-| hand-rolled HSL accent rotation | `ScreenPalette::hot` / `ScreenPalette::cool` |
+The 12 in-app effects follow a 4-dimension naming system. The type
+name is always `Verb` + `Noun` (PascalCase); the file name is the
+snake_case of the same; the display name is `"Verb Noun"`.
 
-The 3.x paths are still available as **deprecated** re-exports in `library::interface::tui::*` and `library::widgets::*` for one minor release. They will be removed in 4.1.
+| Dimension | Values | Purpose |
+|---|---|---|
+| **Verb** | `Falling`, `Rising`, `Flowing`, `Pulled`, `Pulsing` | Motion model |
+| **Noun** | `Glyphs`, `Particles`, `Droplets`, `Comets`, `Blocks`, `Waves` | Visual unit |
+| **Style** | `Solid`, `Trailing`, `Flared` | Render treatment |
+| **Palette** | `Monochrome(r,g,b)`, `Accent`, `Heat`, `AccentDim`, `AccentHot`, `AccentCool` | Color source |
+
+- **Style** lives in `library::ui::effects::dimensions::Style` and is
+  exposed as a field on every effect.
+- **Palette** lives in `library::ui::effects::dimensions::Palette` and
+  is exposed as a field on every effect.
+- All effects expose `with_style(Style)` and `with_palette(Palette)`
+  builder methods.
+
+### Current catalog (12 effects)
+
+| Type | File | Default Style | Default Palette |
+|---|---|---|---|
+| `FallingGlyphs` | `falling_glyphs.rs` | `Trailing` | `Monochrome(Green)` |
+| `FlowingParticles` | `flowing_particles.rs` | `Solid` | `Monochrome(White)` |
+| `PulledParticles` | `pulled_particles.rs` | `Solid` | `Monochrome(Blue)` |
+| `FallingDroplets` | `falling_droplets.rs` | `Solid` | `Monochrome(Blue)` |
+| `RisingFlames` | `rising_flames.rs` | `Solid` | `Heat` |
+| `FallingComets` | `falling_comets.rs` | `Trailing` | `Monochrome(White)` |
+| `PulsingGlyphs` | `pulsing_glyphs.rs` | `Solid` | `Accent` |
+| `PulsingWaves` | `pulsing_waves.rs` | `Solid` | `Heat` |
+| `FlowingBlocks` | `flowing_blocks.rs` | `Solid` | `Accent` |
+| `PulledBlocks` | `pulled_blocks.rs` | `Solid` | `Monochrome(Blue)` |
+| `RisingGlyphs` | `rising_glyphs.rs` | `Solid` | `Heat` |
+| `PulsingParticles` | `pulsing_particles.rs` | `Solid` | `Accent` |
 
 ---
 
 ## Testing
 
-The design system ships with `tests/design_facade.rs` in `library` — 11 tests that exercise the public façade end-to-end (theme, accent, status bar, toast, layout guard, markdown viewer, text wrap, render-logo-block, all 10 effects, etc.). Add similar tests in each app to lock in the contract.
-
-`tests/taxonomy_compliance.rs` (also in `library`) AST-walks `src/` to enforce the 4-layer taxonomy — `design/` files cannot import from `lifecycle/`, `platform/`, or `role/`, so a new design-system addition that violates the layering will fail the test.
+The design system ships with `tests/design_facade.rs` in `library` —
+a comprehensive set of tests that exercise the public surface
+end-to-end (theme, accent, status bar, toast, layout guard, markdown
+viewer, text wrap, render-logo-block, all 12 effects, etc.). Add
+similar tests in each app to lock in the contract.

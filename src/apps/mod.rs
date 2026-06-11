@@ -1,6 +1,4 @@
 //! Application lifecycle, foreground/background controllers, and CLI executors.
-//!
-//! **Taxonomy Classification**: Execution State (Lifecycle) / Foreground & Background.
 
 #[cfg(feature = "service")]
 pub mod daemon;
@@ -12,7 +10,7 @@ pub mod worker;
 #[cfg(feature = "event-log")]
 pub mod event_log;
 
-#[cfg(feature = "lifecycle-background")]
+// File-based logging is core to every app. Always available.
 pub mod file_log;
 
 #[cfg(feature = "notification")]
@@ -22,19 +20,16 @@ pub mod notification;
 pub mod guard;
 #[cfg(feature = "sys-info")]
 pub mod identity;
-#[cfg(feature = "lifecycle-foreground")]
+#[cfg(feature = "widgets")]
 pub mod panic;
-#[cfg(feature = "lifecycle-foreground")]
+#[cfg(feature = "widgets")]
 pub mod power_sync;
 
 #[cfg(feature = "widgets")]
-pub mod tui_bootstrap;
+pub mod bootstrap;
 
 #[cfg(feature = "window")]
 pub mod window;
-
-#[cfg(feature = "role-application")]
-pub mod game;
 
 #[cfg(feature = "chrome")]
 pub mod chrome;

@@ -3,7 +3,7 @@
 //! Ambient particles drifting in arbitrary directions with downward gravity.
 //! Default style: `Solid`. Default palette: `Monochrome(White)`.
 //!
-//! Classification: Interface (TUI) + Role (Application).
+//! Classification: Interface (console) + Role (Application).
 
 use crate::core::{LcgRng, TerminalCell};
 use super::dimensions::{Density, Direction, Palette, Speed, Style, resolve_color};

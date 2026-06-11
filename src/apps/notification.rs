@@ -5,13 +5,28 @@
 #[cfg(target_os = "linux")]
 use std::process::Command;
 
-#[cfg(all(target_os = "windows", feature = "notification"))]
-fn escape_xml(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&apos;")
+/// XML 1.0–safe escaping. The five named entities are mandatory; in
+/// addition, every C0 control byte is mapped to &#xN; because XML 1.0
+/// parsers reject them outright. NUL is replaced with U+FFFD.
+pub fn escape_xml(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&apos;"),
+            '\0' => out.push('\u{FFFD}'),
+            c if (c as u32) < 0x20 => {
+                use std::fmt::Write;
+                let _ = write!(out, "&#x{:X};", c as u32);
+            }
+            '\u{FFFE}' | '\u{FFFF}' => out.push('\u{FFFD}'),
+            c => out.push(c),
+        }
+    }
+    out
 }
 
 /// Trigger a native Windows Toast Notification (on Windows) or desktop notification (on Linux).

@@ -19,9 +19,9 @@ pub mod config;
 #[cfg(feature = "clipboard")]
 pub mod clipboard;
 
-#[cfg(feature = "interface-api")]
+#[cfg(feature = "service")]
 pub mod ipc;
-#[cfg(feature = "interface-api")]
+#[cfg(feature = "service")]
 pub mod ipc_messages;
 
 #[cfg(feature = "sys-info")]

@@ -1,6 +1,6 @@
 //! Title banner widget for ratatui TUIs.
 //!
-//! **Taxonomy Classification**: Interface (TUI / Presentation Layer).
+//! **Taxonomy Classification**: Interface (Presentation Layer).
 
 use ratatui::{
     Frame,

@@ -1,6 +1,6 @@
 ﻿use ratatui::style::Color;
 
-/// First-class bundle of accent/dim/text colors for the TUI accent widget family.
+/// First-class bundle of accent/dim/text colors for the accent widget family.
 /// 
 /// This makes it easy for consumers (template panels, pulse dashboards, etc.)
 /// to pass a consistent theme to AccentList, AccentTabs, AccentGauge, etc.

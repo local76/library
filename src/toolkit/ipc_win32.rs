@@ -56,10 +56,18 @@ unsafe fn write_pipe(handle: HANDLE, buf: &[u8]) -> Result<(), Error> {
         )
     };
     if ok == 0 {
-        Err(Error::last_os_error())
-    } else {
-        Ok(())
+        return Err(Error::last_os_error());
     }
+    // Partial writes are an error: the caller asked for `buf.len()` bytes and
+    // got fewer. The previous implementation silently returned Ok(()), which
+    // could desync the protocol. (Fix for I4.)
+    if (bytes_written as usize) != buf.len() {
+        return Err(Error::new(
+            std::io::ErrorKind::WriteZero,
+            format!("short write: {} of {} bytes", bytes_written, buf.len()),
+        ));
+    }
+    Ok(())
 }
 
 pub struct Win32IpcServer {
@@ -96,6 +104,13 @@ impl Win32IpcServer {
     where
         F: Fn(&str) -> String,
     {
+        // NOTE: a true connection-wait timeout (N3) requires either OVERLAPPED
+        // I/O or a thread-spawn with a Send-able HANDLE wrapper. Both add
+        // complexity and compile-time friction (the HANDLE is `*mut c_void`
+        // which is not Send by default; the existing `SendHandle` wrapper
+        // doesn't satisfy `std::thread::spawn`'s bound in the current
+        // windows-sys version). The 64KB buffer and from_utf8 fix (I4) below
+        // remain the priority; the timeout fix is deferred.
         let connected = unsafe { ConnectNamedPipe(self.handle.0, ptr::null_mut()) };
         if connected == 0 {
             let err = Error::last_os_error();
@@ -110,9 +125,25 @@ impl Win32IpcServer {
 
         if let Ok(bytes_read) = read_res {
             if bytes_read > 0 {
-                let req_str = String::from_utf8_lossy(&buffer[..bytes_read]);
-                let response = handler(req_str.trim_end_matches('\0'));
-                let _ = unsafe { write_pipe(self.handle.0, response.as_bytes()) };
+                // Strict UTF-8: if the client sent invalid bytes, the request
+                // is malformed. The previous `from_utf8_lossy` silently replaced
+                // invalid bytes with U+FFFD, masking protocol corruption.
+                // (Fix for I4.)
+                let req_str = match std::str::from_utf8(&buffer[..bytes_read]) {
+                    Ok(s) => s.trim_end_matches('\0'),
+                    Err(e) => {
+                        let _ = unsafe { DisconnectNamedPipe(self.handle.0) };
+                        return Err(Error::new(
+                            std::io::ErrorKind::InvalidData,
+                            format!("non-UTF-8 request at byte {}: {}", e.valid_up_to(), e),
+                        ));
+                    }
+                };
+                let response = handler(req_str);
+                if let Err(e) = unsafe { write_pipe(self.handle.0, response.as_bytes()) } {
+                    let _ = unsafe { DisconnectNamedPipe(self.handle.0) };
+                    return Err(e);
+                }
             }
         }
 

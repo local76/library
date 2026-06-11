@@ -5,7 +5,7 @@ use ratatui::{
     widgets::{Block, Widget},
 };
 
-/// Category of TUI visual toast notifications.
+/// Category of console visual toast notifications.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToastKind {
     Success,
@@ -14,7 +14,7 @@ pub enum ToastKind {
     Info,
 }
 
-/// An overlay widget to render dynamic visual alerts directly inside a TUI frame layout.
+/// An overlay widget to render dynamic visual alerts directly inside a console frame layout.
 pub struct ToastBox<'a> {
     pub title: &'a str,
     pub message: &'a str,

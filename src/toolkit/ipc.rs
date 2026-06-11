@@ -109,12 +109,12 @@ impl IpcServiceClient {
 /// A local inter-process communication server.
 /// Uses Win32 Named Pipes on Windows and Unix Domain Sockets on Unix platforms.
 pub struct IpcServer {
-    #[cfg(all(target_os = "windows", feature = "interface-api"))]
+    #[cfg(all(target_os = "windows", feature = "service"))]
     inner: win32_ipc::Win32IpcServer,
     #[cfg(all(unix, not(target_os = "windows")))]
     inner: unix_ipc::UnixIpcServer,
     #[cfg(not(any(
-        all(target_os = "windows", feature = "interface-api"),
+        all(target_os = "windows", feature = "service"),
         unix
     )))]
     inner: fallback_ipc::FallbackIpcServer,
@@ -123,7 +123,7 @@ pub struct IpcServer {
 impl IpcServer {
     /// Bind to a local socket/pipe with the given name.
     pub fn bind(name: &str) -> crate::error::Result<Self> {
-        #[cfg(all(target_os = "windows", feature = "interface-api"))]
+        #[cfg(all(target_os = "windows", feature = "service"))]
         {
             Ok(Self {
                 inner: win32_ipc::Win32IpcServer::bind(name)?,
@@ -136,7 +136,7 @@ impl IpcServer {
             })
         }
         #[cfg(not(any(
-            all(target_os = "windows", feature = "interface-api"),
+            all(target_os = "windows", feature = "service"),
             unix
         )))]
         {
@@ -159,12 +159,12 @@ impl IpcServer {
 
 /// A local inter-process communication client.
 pub struct IpcClient {
-    #[cfg(all(target_os = "windows", feature = "interface-api"))]
+    #[cfg(all(target_os = "windows", feature = "service"))]
     inner: win32_ipc::Win32IpcClient,
     #[cfg(all(unix, not(target_os = "windows")))]
     inner: unix_ipc::UnixIpcClient,
     #[cfg(not(any(
-        all(target_os = "windows", feature = "interface-api"),
+        all(target_os = "windows", feature = "service"),
         unix
     )))]
     inner: fallback_ipc::FallbackIpcClient,
@@ -173,7 +173,7 @@ pub struct IpcClient {
 impl IpcClient {
     /// Connect to a local socket/pipe server with the given name.
     pub fn connect(name: &str) -> crate::error::Result<Self> {
-        #[cfg(all(target_os = "windows", feature = "interface-api"))]
+        #[cfg(all(target_os = "windows", feature = "service"))]
         {
             Ok(Self {
                 inner: win32_ipc::Win32IpcClient::connect(name)?,
@@ -186,7 +186,7 @@ impl IpcClient {
             })
         }
         #[cfg(not(any(
-            all(target_os = "windows", feature = "interface-api"),
+            all(target_os = "windows", feature = "service"),
             unix
         )))]
         {
@@ -202,7 +202,7 @@ impl IpcClient {
     }
 }
 
-#[cfg(all(target_os = "windows", feature = "interface-api"))]
+#[cfg(all(target_os = "windows", feature = "service"))]
 #[path = "ipc_win32.rs"]
 mod win32_ipc;
 
@@ -211,7 +211,7 @@ mod win32_ipc;
 mod unix_ipc;
 
 #[cfg(not(any(
-    all(target_os = "windows", feature = "interface-api"),
+    all(target_os = "windows", feature = "service"),
     unix
 )))]
 #[path = "ipc_fallback.rs"]

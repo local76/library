@@ -4,7 +4,7 @@
 //! Useful as ambient focus indicator or starfield-style twinkle.
 //! Default style: `Solid`. Default palette: `Accent`.
 //!
-//! Classification: Interface (TUI) + Role (Application).
+//! Classification: Interface (console) + Role (Application).
 
 use crate::core::{LcgRng, TerminalCell};
 use super::dimensions::{Density, Palette, Speed, Style, resolve_color};
